@@ -174,7 +174,27 @@
     border-radius: 12px; padding: 9px 12px;
   }
   .selbar b { font-size: 14px; font-weight: 500; }
-  .resline { font-size: 13.5px; color: var(--muted); }
+  .resline { display: grid; gap: 8px; font-size: 13.5px; color: var(--muted); }
+  .res-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .res-total { font-size: 15px; font-weight: 500; color: var(--text); padding-right: 2px; }
+  /* One count per state, in the same colour and with the same icon the row
+     chip uses, so the tally and the list read as the same vocabulary. */
+  .app button.tally {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 12px 6px 10px; border-radius: 20px; font-size: 13px;
+    color: var(--text-2); transition: background .13s;
+  }
+  .tally .ico { width: 14px; height: 14px; }
+  .tally b { font-weight: 600; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .app button.tally:hover { background: var(--surface-2); }
+  .tally[data-zero="true"] { opacity: .42; }
+  .app button.tally[aria-pressed="true"] { background: var(--accent-dim); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .app button.tally.ok { color: var(--accent); }
+  .app button.tally.pend { color: var(--warn); }
+  .app button.tally.bad { color: var(--danger); }
+  .app button.tally.off { color: var(--faint); }
+  .tally b { color: inherit; }
+  .res-tip { font-size: 13.5px; color: var(--muted); }
 
   .filters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
   .field { border: 1px solid var(--line); background: var(--field); border-radius: 9px; padding: 11px 12px; font-size: 14px; width: 100%; color: var(--text); }
@@ -424,6 +444,19 @@
   .dlg-names { display: grid; gap: 7px; background: var(--surface-2); border-radius: 11px; padding: 12px 14px; margin-bottom: 14px; max-height: 172px; overflow: auto; }
   .dlg-names div { font-size: 14px; color: var(--text); display: flex; gap: 12px; align-items: baseline; }
   .dlg-names em { margin-left: auto; font-style: normal; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  /* What the file does, as three lines she can count instead of read. */
+  .outcome { display: grid; gap: 2px; margin-bottom: 14px; }
+  .outcome div { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; font-size: 15px; color: var(--text-2); }
+  .outcome div + div { margin-top: 4px; }
+  .outcome .ico { width: 19px; height: 19px; flex: none; }
+  .outcome b { font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; color: var(--text); }
+  .outcome .add { background: color-mix(in srgb, var(--accent) 13%, transparent); color: var(--accent); }
+  .outcome .add b { color: var(--accent); }
+  .outcome .same { background: var(--surface-2); }
+  .outcome .out { background: color-mix(in srgb, var(--danger) 13%, transparent); color: var(--danger); }
+  .outcome .out b { color: var(--danger); }
+  .dlg-foot .btn .ico { width: 17px; height: 17px; }
+  .fineprint { margin: 0 0 14px; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
   .note { border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; font-size: 14px; line-height: 1.6; }
   .note b { display: block; font-weight: 500; padding-bottom: 3px; }
   .note.warn { background: color-mix(in srgb, var(--warn) 13%, transparent); color: var(--text-2); }
@@ -533,7 +566,7 @@
         <button class="btn btn-ghost" id="btn-unsel">Quitar selección</button>
       </div>
 
-      <span class="resline" id="count-res">0 resultados</span>
+      <div class="resline" id="count-res"></div>
     </div>
     </div>
 
@@ -830,11 +863,13 @@
     const veil = el("div", { id: "dlg-veil" });
     // `alt` is the softer of the two ways forward, so it sits before the
     // dangerous one and never looks like the plain "go back" button.
-    const no = '<button class="btn btn-ghost" id="dlg-no">' + esc(o.cancel || "No, regresar") + '</button>';
-    const yesBtn = '<button class="btn ' + (o.danger ? "btn-danger" : "btn-primary") + '" id="dlg-yes">' + esc(o.confirm) + '</button>';
+    // An icon on each button says what it does before the sentence is read.
+    const ico = k => (k && OUT_ICONS[k]) ? outIco(k) : "";
+    const no = '<button class="btn btn-ghost" id="dlg-no">' + ico(o.cancelIcon) + esc(o.cancel || "No, regresar") + '</button>';
+    const yesBtn = '<button class="btn ' + (o.danger ? "btn-danger" : "btn-primary") + '" id="dlg-yes">' + ico(o.confirmIcon) + esc(o.confirm) + '</button>';
     const foot = o.onConfirm
       ? (o.alt
-        ? '<button class="btn btn-soft" id="dlg-alt">' + esc(o.alt.label) + '</button>' + yesBtn + no
+        ? '<button class="btn btn-soft" id="dlg-alt">' + ico(o.alt.icon) + esc(o.alt.label) + '</button>' + yesBtn + no
         : no + yesBtn)
       : '<button class="btn btn-primary" id="dlg-no">Entendido</button>';
     veil.innerHTML = '<div class="dialog" role="dialog" aria-modal="true" aria-label="' + esc(o.title) + '">' +
@@ -871,6 +906,62 @@
     });
     if (users.length > shown.length) html += '<div style="color:var(--muted)">y ' + (users.length - shown.length) + ' más</div>';
     return html + '</div>';
+  }
+
+  // Icon per state. Drawn, not emoji: they sit next to 12.5px text and have to
+  // stay legible when the row chip repeats them.
+  const ESTADO_ICONS = {
+    "Ya usa Veeda": '<circle cx="12" cy="12" r="8.5"></circle><polyline points="8.4 12.2 11 14.8 15.7 9.6"></polyline>',
+    "Aceptó, falta que entre": '<circle cx="12" cy="12" r="8.5"></circle><polyline points="12 7.3 12 12.2 15.2 14"></polyline>',
+    "Invitada, sin respuesta": '<path d="M20.5 4.2L10.6 14.1"></path><path d="M20.5 4.2l-6 15.3-3.9-6.6-6.6-3.9 16.5-4.8z"></path>',
+    "No le llegó": '<path d="M12 4.6l8.6 14.8H3.4L12 4.6z"></path><line x1="12" y1="10" x2="12" y2="13.8"></line><line x1="12" y1="16.4" x2="12" y2="16.41"></line>',
+    "Falta invitar": '<circle cx="12" cy="12" r="8.5" stroke-dasharray="2.6 3.2"></circle>'
+  };
+
+  // Order she reads them in: from "ya está resuelto" down to "ni lo he tocado",
+  // with the one that needs her attention (No le llegó) before the pendings.
+  const ESTADOS = [
+    { label: "Ya usa Veeda", cls: "ok", val: "ok" },
+    { label: "No le llegó", cls: "bad", val: "fallido" },
+    { label: "Invitada, sin respuesta", cls: "pend", val: "Enviado" },
+    { label: "Aceptó, falta que entre", cls: "pend", val: "acepto" },
+    { label: "Falta invitar", cls: "off", val: "Pendiente" }
+  ];
+
+  function paintTally(rows, selCount) {
+    const box = $("#count-res");
+    box.innerHTML = "";
+
+    const cuenta = {};
+    rows.forEach(u => { const e = estado(u).label; cuenta[e] = (cuenta[e] || 0) + 1; });
+
+    const top = el("div", { class: "res-top" });
+    top.appendChild(el("span", { class: "res-total" }, plural(rows.length, "colaborador", "colaboradores")));
+
+    const activo = $("#f-onb").value;
+    ESTADOS.forEach(e => {
+      const n = cuenta[e.label] || 0;
+      const b = el("button", {
+        class: "tally " + e.cls,
+        "data-zero": String(n === 0),
+        "aria-pressed": String(activo === e.val),
+        title: activo === e.val ? "Quitar este filtro" : "Ver solo: " + e.label
+      });
+      b.innerHTML = '<svg class="ico" viewBox="0 0 24 24">' + ESTADO_ICONS[e.label] + '</svg>' +
+        '<b>' + n + '</b>' + esc(e.label);
+      b.onclick = () => {
+        $("#f-onb").value = activo === e.val ? "" : e.val;
+        state.page = 1;
+        paintFilterCount();
+        render();
+      };
+      top.appendChild(b);
+    });
+    box.appendChild(top);
+
+    if (!selCount) {
+      box.appendChild(el("p", { class: "res-tip" }, "Marca la casilla de una persona para invitarla o darla de baja."));
+    }
   }
 
   function estado(u) {
@@ -1114,9 +1205,7 @@
         : " Invitar por WhatsApp";
     }
 
-    // While nothing is picked, this line is also the instructions
-    $("#count-res").textContent = plural(rows.length, "colaborador", "colaboradores") +
-      (selCount ? "" : " · Marca la casilla de una persona para invitarla o darla de baja");
+    paintTally(rows, selCount);
   }
 
   /* ---------- wiring ---------- */
@@ -2544,36 +2633,45 @@
     parsed = null;
   }
 
+  const OUT_ICONS = {
+    add: '<circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"></path><line x1="18" y1="7" x2="18" y2="13"></line><line x1="15" y1="10" x2="21" y2="10"></line>',
+    same: '<line x1="4" y1="9.5" x2="20" y2="9.5"></line><line x1="4" y1="14.5" x2="20" y2="14.5"></line>',
+    out: '<circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"></path><line x1="15" y1="10" x2="21" y2="10"></line>',
+    swap: '<polyline points="16 4 20 8 16 12"></polyline><path d="M20 8H8"></path><polyline points="8 12 4 16 8 20"></polyline><path d="M4 16h12"></path>',
+    back: '<line x1="20" y1="12" x2="5" y2="12"></line><polyline points="11 6 5 12 11 18"></polyline>'
+  };
+  const outIco = k => '<svg class="ico" viewBox="0 0 24 24">' + OUT_ICONS[k] + '</svg>';
+
   function saveExcel() {
     const plan = planImport();
     const nombre = parsed.filename;
     const hayBajas = plan.baja.length > 0;
 
-    let body = '<div class="note calm"><b>Qué va a pasar</b>' +
-      plural(plan.nuevos.length, "alta nueva", "altas nuevas") + ' · ' +
-      plural(plan.update.length, "colaborador se queda", "colaboradores se quedan") + ' · ' +
-      plural(plan.baja.length, "baja", "bajas") + '</div>';
+    const linea = (k, cls, n, texto) =>
+      '<div class="' + cls + '">' + outIco(k) + '<b>' + n + '</b>' + esc(texto) + '</div>';
+
+    let body = '<div class="outcome">' +
+      linea("add", "add", plan.nuevos.length, plan.nuevos.length === 1 ? "se agrega" : "se agregan") +
+      linea("same", "same", plan.update.length, plan.update.length === 1 ? "se queda igual" : "se quedan igual") +
+      (hayBajas ? linea("out", "out", plan.baja.length, plan.baja.length === 1 ? "se da de baja" : "se dan de baja") : "") +
+      '</div>';
+
     if (hayBajas) {
       body += nameList(plan.baja, u => u.citasFuturas ? plural(u.citasFuturas, "cita futura", "citas futuras") : "");
-      body += '<div class="note warn"><b>Estas personas perderían el acceso hoy</b>' +
-        'No vienen en el archivo. Si eso no es lo que quieres, usa el botón «' +
-        (plan.nuevos.length ? "Mejor solo agregar a los nuevos" : "Mejor no dar de baja a nadie") +
-        '» y nadie se va. Dar de baja tampoco cancela sus citas ya agendadas.</div>';
+      body += '<p class="fineprint">Sus citas ya agendadas siguen en pie. Las bajas se revierten desde «Dados de baja».</p>';
     }
-    body += '<div class="note calm"><b>Se puede revertir</b>Las bajas quedan en «Dados de baja» y desde ahí las reactivas.</div>';
+
+    const alt = plan.nuevos.length ? "Solo agregar a los nuevos" : "No dar de baja a nadie";
 
     openConfirm({
-      title: hayBajas ? "¿Qué quieres hacer con «" + nombre + "»?" : "Agregar la gente de «" + nombre + "»",
-      lead: hayBajas
-        ? "El archivo trae menos gente de la que hay hoy en Veeda. Puedes hacer dos cosas: dejar la lista igualita al archivo, y entonces se da de baja a quien no venga; o solo agregar a los nuevos y no tocar a nadie más."
-        : "Después de esto, la lista de Veeda será exactamente lo que trae el archivo.",
+      title: hayBajas ? "¿Qué hago con «" + nombre + "»?" : "Agregar la gente de «" + nombre + "»",
       body: body,
       confirm: hayBajas ? "Dejar la lista igual al archivo" : "Agregar a la lista",
+      confirmIcon: hayBajas ? "swap" : "add",
+      cancel: "No, regresar",
+      cancelIcon: "back",
       danger: hayBajas,
-      alt: hayBajas ? {
-        label: plan.nuevos.length ? "Mejor solo agregar a los nuevos" : "Mejor no dar de baja a nadie",
-        onClick: () => aplicarImport(plan, nombre, false)
-      } : null,
+      alt: hayBajas ? { label: alt, icon: "add", onClick: () => aplicarImport(plan, nombre, false) } : null,
       onConfirm: () => aplicarImport(plan, nombre, true)
     });
   }
