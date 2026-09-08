@@ -27,6 +27,13 @@
     --code-bg: #2f3aa0;
     --code-text: #dfe5ff;
     --shadow: 0 24px 60px rgba(0,0,0,.55);
+    /* Serie categórica: NO reusa el verde/ámbar/rojo, que aquí significan estado.
+       Escalonada aparte para fondo oscuro y validada contra él, no invertida. */
+    --s1: #3d8ada;
+    --s2: #0fa896;
+    --s3: #9b6cf2;
+    --s4: #e35c8a;
+    --s5: #c58128;
   }
   .app[data-mode="light"] {
     --bg: #f3f7f4;
@@ -52,6 +59,11 @@
     --code-bg: #e3e7ff;
     --code-text: #2b3585;
     --shadow: 0 20px 50px rgba(16,35,27,.14);
+    --s1: #2b6cb0;
+    --s2: #0f9b8e;
+    --s3: #8b5cf6;
+    --s4: #d6336c;
+    --s5: #c2721c;
   }
 
   body { background: #f3f7f4; margin: 0; }
@@ -128,11 +140,11 @@
   /* ---------- Panel de Control ----------
      Una bandeja de pendientes, no un reporte. Cada renglón es una cosa que
      hacer: cuántas personas, qué les pasa y el botón que lo resuelve. */
-  .pend { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; gap: 10px; align-content: start; padding-bottom: 2px; }
+  .pend { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; gap: 8px; align-content: start; padding-bottom: 2px; }
   .pend-row {
     display: flex; align-items: center; gap: 18px;
     border: 1px solid var(--line); border-radius: 13px; background: var(--surface);
-    padding: 16px 18px;
+    padding: 13px 18px;
   }
   .pend-ico { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; flex: none; }
   .pend-ico .ico { width: 20px; height: 20px; }
@@ -159,6 +171,20 @@
   .pbox { border: 1px solid var(--line); border-radius: 13px; background: var(--surface); padding: 16px 18px; display: grid; gap: 10px; align-content: start; }
   .pbox h3 { margin: 0; font-size: 15px; font-weight: 500; color: var(--text); }
   .pbox .sub { font-size: 14px; color: var(--muted); }
+  /* Dona de servicios. SVG a mano: cinco arcos con hueco de 2px entre ellos y
+     el total en el centro. La identidad nunca depende del color solo — cada
+     rebanada se repite en la leyenda con su nombre y su cuenta. */
+  .donut { display: flex; align-items: center; gap: 18px; }
+  .donut svg { width: 112px; height: 112px; flex: none; }
+  .donut .hole { font-family: inherit; }
+  .donut .hole .n { font-size: 25px; font-weight: 600; fill: var(--text); }
+  .donut .hole .t { font-size: 9.5px; fill: var(--muted); }
+  .donut-leg { display: grid; gap: 3px; min-width: 0; flex-grow: 1; }
+  .donut-leg div { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text-2); }
+  .donut-leg i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .donut-leg b { margin-left: auto; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .donut-leg em { font-style: normal; color: var(--faint); font-size: 12.5px; width: 4.2ch; text-align: right; font-variant-numeric: tabular-nums; }
+  .barwrap { display: grid; gap: 8px; padding-top: 4px; border-top: 1px solid var(--line-soft); }
   /* Barra de uso: dos tramos, sin librería de gráficas */
   .bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--surface-2); }
   .bar i { display: block; }
@@ -682,6 +708,18 @@
   const CIUDADES = { "Monterrey Centro": "Monterrey", "San Pedro": "San Pedro Garza García", "Apodaca": "Apodaca", "Guadalupe": "Guadalupe" };
   const AREAS = ["Operaciones", "Ventas", "Tecnología", "Recursos Humanos"];
 
+  /* ---------- servicios ----------
+     Los cinco grupos que usa el portal real (medicina, nutrición, psicología,
+     dental y descuentos), no los siete tipos sueltos: cinco rebanadas se leen,
+     siete no. `peso` es qué tan seguido se usa cada uno al generar la muestra. */
+  const SERVICIOS = [
+    { key: "medicina", label: "Medicina", peso: 34 },
+    { key: "nutricion", label: "Nutrición", peso: 20 },
+    { key: "psicologia", label: "Psicología", peso: 18 },
+    { key: "descuentos", label: "Descuentos", peso: 16 },
+    { key: "dental", label: "Dental", peso: 12 }
+  ];
+
   const DAY = 864e5;
   const daysAgo = n => new Date(Date.now() - n * DAY).toISOString();
 
@@ -720,12 +758,28 @@
 
   const isoDay = ms => new Date(ms).toISOString().slice(0, 10);
 
+  function sortearUsos(rnd) {
+    const usos = {};
+    const total = SERVICIOS.reduce((a, sv) => a + sv.peso, 0);
+    const cuantos = 1 + Math.floor(rnd() * 5);
+    for (let k = 0; k < cuantos; k++) {
+      let tiro = rnd() * total;
+      for (const sv of SERVICIOS) {
+        tiro -= sv.peso;
+        if (tiro <= 0) { usos[sv.key] = (usos[sv.key] || 0) + 1; break; }
+      }
+    }
+    return usos;
+  }
+
   function generarUsuarios(n) {
     const rnd = mulberry(20260907);
+    const rndUso = mulberry(31415);
     const one = arr => arr[Math.floor(rnd() * arr.length)];
     const int = (a, b) => a + Math.floor(rnd() * (b - a + 1));
     const correos = new Set(SEED.map(r => r[4]));
     const out = [];
+    let svUso = false; // se asigna dentro del literal, para no mover la secuencia
 
     for (let i = 0; i < n; i++) {
       const sex = rnd() < 0.52 ? "female" : "male";
@@ -773,7 +827,7 @@
         sucursal: sucursal, area: one(AREAS), reporta: "—",
         tipo: rnd() < 0.05 ? "Administrador" : "Colaborador",
         alta: alta, acceso: acceso, onboarding: onboarding,
-        servicio: rnd() < 0.45, baja: baja,
+        servicio: (svUso = rnd() < 0.45), usos: svUso ? sortearUsos(rndUso) : {}, baja: baja,
         citasFuturas: citas, envio: envio,
         bajaFecha: baja ? isoDay(Date.parse(alta) + int(30, 300) * DAY) : "",
         bajaPor: baja ? one(["mariana.trevino@empresa.com", "rh@empresa.com", "neil@veeda.io"]) : "",
@@ -783,12 +837,20 @@
     return out;
   }
 
+  // Usos de los seis casos demo, a mano para que la historia de cada uno cuadre.
+  const SEED_USOS = {
+    "mariana.trevino@empresa.com": { medicina: 2, nutricion: 1, descuentos: 3 },
+    "ricardo.cavazos@empresa.com": { medicina: 1, psicologia: 4, dental: 1 },
+    "paulina.elizondo@empresa.com": { descuentos: 2 }
+  };
+
   let uid = 0;
   function seedUsers() {
     const base = SEED.map(r => ({
       id: ++uid, first: r[0], last: r[1], last2: r[2], sex: r[3], email: r[4], lada: "+52", phone: r[5],
       dob: r[6], empno: r[7], sucursal: r[8], area: r[9], reporta: r[10], tipo: r[11],
-      alta: r[12], acceso: r[13], onboarding: r[14], servicio: r[15], baja: false,
+      alta: r[12], acceso: r[13], onboarding: r[14], servicio: r[15],
+      usos: r[15] ? (SEED_USOS[r[4]] || { medicina: 1 }) : {}, baja: false,
       citasFuturas: r[16], envio: r[17],
       bajaFecha: "", bajaPor: "", bajaProgramada: ""
     }));
@@ -1216,12 +1278,60 @@
     const usaron = act.filter(u => u.servicio).length;
     const nunca = act.length - usaron;
     const pct = act.length ? Math.round((usaron / act.length) * 100) : 0;
-    box.innerHTML =
-      '<h3>Uso de servicios</h3>' +
-      '<p class="sub">' + usaron + ' de ' + act.length + ' ya usaron algo de Veeda.</p>' +
+
+    // Cuánto se usó cada grupo, entre toda la gente activa
+    const cuenta = SERVICIOS.map((sv, i) => ({
+      label: sv.label,
+      color: "var(--s" + (i + 1) + ")",
+      n: act.reduce((a, u) => a + ((u.usos && u.usos[sv.key]) || 0), 0)
+    })).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
+    const total = cuenta.reduce((a, x) => a + x.n, 0);
+
+    box.innerHTML = '<h3>Servicios más usados</h3>';
+
+    if (!total) {
+      box.appendChild(el("p", { class: "sub" }, "Todavía nadie ha usado ningún servicio."));
+    } else {
+      // Arcos sobre un solo círculo: r=42, perímetro 2πr. El hueco de 2.6
+      // unidades entre rebanadas es el separador que pide la leyenda.
+      const R = 42, C = 2 * Math.PI * R, HUECO = 2.6;
+      let acc = 0;
+      const arcos = cuenta.map(x => {
+        const largo = (x.n / total) * C;
+        const dibujo = Math.max(largo - HUECO, 0.6);
+        const a = '<circle cx="60" cy="60" r="' + R + '" fill="none" stroke="' + x.color + '"' +
+          ' stroke-width="16" stroke-dasharray="' + dibujo.toFixed(2) + ' ' + (C - dibujo).toFixed(2) + '"' +
+          ' stroke-dashoffset="' + (-acc).toFixed(2) + '">' +
+          '<title>' + esc(x.label + ": " + x.n + " (" + Math.round((x.n / total) * 100) + "%)") + '</title></circle>';
+        acc += largo;
+        return a;
+      }).join("");
+
+      const wrap = el("div", { class: "donut" });
+      wrap.innerHTML =
+        '<svg viewBox="0 0 120 120" role="img" aria-label="Servicios usados por grupo">' +
+          '<g transform="rotate(-90 60 60)">' + arcos + '</g>' +
+          '<g class="hole" text-anchor="middle">' +
+            '<text class="n" x="60" y="57">' + total + '</text>' +
+            '<text class="t" x="60" y="73">servicios</text>' +
+          '</g>' +
+        '</svg>' +
+        '<div class="donut-leg">' +
+          cuenta.map(x =>
+            '<div><i style="background:' + x.color + '"></i>' + esc(x.label) +
+            '<b>' + x.n + '</b><em>' + Math.round((x.n / total) * 100) + '%</em></div>'
+          ).join("") +
+        '</div>';
+      box.appendChild(wrap);
+    }
+
+    const bar = el("div", { class: "barwrap" });
+    bar.innerHTML =
+      '<p class="sub">' + usaron + ' de ' + act.length + ' colaboradores ya usaron algo.</p>' +
       '<div class="bar"><i class="si" style="width:' + pct + '%"></i><i class="no" style="width:' + (100 - pct) + '%"></i></div>' +
-      '<div class="barleg"><span class="si"><i></i>' + usaron + ' ya usó algo</span>' +
-      '<span class="no"><i></i>' + nunca + ' nunca ha usado</span></div>';
+      '<div class="barleg"><span class="si"><i></i>ya usó algo</span>' +
+      '<span class="no"><i></i>' + nunca + ' nunca</span></div>';
+    box.appendChild(bar);
   }
 
   function pintarMovs(box) {
@@ -2159,7 +2269,7 @@
       lada: d.lada || "+52", phone: d.phone, dob: d.dob, empno: d.empno || "",
       sucursal: d.sucursal || "", ciudad: d.ciudad || "", area: "", reporta: "—", tipo: "Colaborador",
       alta: todayISO(), acceso: "", onboarding: "Pendiente", servicio: false, baja: false,
-      citasFuturas: 0, envio: null, bajaFecha: "", bajaPor: "", bajaProgramada: ""
+      citasFuturas: 0, usos: {}, envio: null, bajaFecha: "", bajaPor: "", bajaProgramada: ""
     };
     state.users.push(u);
     logMov(u.id, "alta", "Alta desde el portal");
