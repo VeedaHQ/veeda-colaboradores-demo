@@ -174,28 +174,16 @@
     border-radius: 12px; padding: 9px 12px;
   }
   .selbar b { font-size: 14px; font-weight: 500; }
-  .resline { display: grid; gap: 8px; font-size: 13.5px; color: var(--muted); }
-  .res-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .res-total { font-size: 15px; font-weight: 500; color: var(--text); padding-right: 2px; }
-  /* One count per state, in the same colour and with the same icon the row
-     chip uses, so the tally and the list read as the same vocabulary. */
-  .app button.tally {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 6px 12px 6px 10px; border-radius: 20px; font-size: 13px;
-    color: var(--text-2); transition: background .13s;
-  }
-  .tally .ico { width: 14px; height: 14px; }
-  .tally b { font-weight: 600; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-  .app button.tally:hover { background: var(--surface-2); }
-  .tally[data-zero="true"] { opacity: .42; }
-  .app button.tally[aria-pressed="true"] { background: var(--accent-dim); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
-  .app button.tally.ok { color: var(--accent); }
-  .app button.tally.pend { color: var(--warn); }
-  .app button.tally.bad { color: var(--danger); }
-  .app button.tally.off { color: var(--faint); }
-  .tally b { color: inherit; }
-  .res-tip { font-size: 13.5px; color: var(--muted); }
-
+  .resline { font-size: 13.5px; color: var(--muted); line-height: 1.9; }
+  /* The count per state rides inside the same sentence: colour and a small
+     icon, nothing to click. */
+  .tal { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .tal .ico { width: 12px; height: 12px; }
+  .tal b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tal.ok { color: var(--accent); }
+  .tal.pend { color: var(--warn); }
+  .tal.bad { color: var(--danger); }
+  .tal.off { color: var(--faint); }
   .filters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
   .field { border: 1px solid var(--line); background: var(--field); border-radius: 9px; padding: 11px 12px; font-size: 14px; width: 100%; color: var(--text); }
   select.field { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--faint) 50%), linear-gradient(135deg, var(--faint) 50%, transparent 50%); background-position: right 14px center, right 9px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 28px; cursor: pointer; }
@@ -566,7 +554,7 @@
         <button class="btn btn-ghost" id="btn-unsel">Quitar selección</button>
       </div>
 
-      <div class="resline" id="count-res"></div>
+      <span class="resline" id="count-res"></span>
     </div>
     </div>
 
@@ -935,32 +923,22 @@
     const cuenta = {};
     rows.forEach(u => { const e = estado(u).label; cuenta[e] = (cuenta[e] || 0) + 1; });
 
-    const top = el("div", { class: "res-top" });
-    top.appendChild(el("span", { class: "res-total" }, plural(rows.length, "colaborador", "colaboradores")));
+    const sep = () => box.appendChild(document.createTextNode(" · "));
+    box.appendChild(document.createTextNode(plural(rows.length, "colaborador", "colaboradores")));
 
-    const activo = $("#f-onb").value;
     ESTADOS.forEach(e => {
       const n = cuenta[e.label] || 0;
-      const b = el("button", {
-        class: "tally " + e.cls,
-        "data-zero": String(n === 0),
-        "aria-pressed": String(activo === e.val),
-        title: activo === e.val ? "Quitar este filtro" : "Ver solo: " + e.label
-      });
-      b.innerHTML = '<svg class="ico" viewBox="0 0 24 24">' + ESTADO_ICONS[e.label] + '</svg>' +
+      if (!n) return;
+      sep();
+      const t = el("span", { class: "tal " + e.cls });
+      t.innerHTML = '<svg class="ico" viewBox="0 0 24 24">' + ESTADO_ICONS[e.label] + '</svg>' +
         '<b>' + n + '</b>' + esc(e.label);
-      b.onclick = () => {
-        $("#f-onb").value = activo === e.val ? "" : e.val;
-        state.page = 1;
-        paintFilterCount();
-        render();
-      };
-      top.appendChild(b);
+      box.appendChild(t);
     });
-    box.appendChild(top);
 
     if (!selCount) {
-      box.appendChild(el("p", { class: "res-tip" }, "Marca la casilla de una persona para invitarla o darla de baja."));
+      sep();
+      box.appendChild(document.createTextNode("Marca la casilla de una persona para invitarla o darla de baja"));
     }
   }
 
