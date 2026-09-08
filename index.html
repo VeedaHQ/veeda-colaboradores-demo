@@ -113,7 +113,10 @@
   .ver button:hover { color: var(--text-2); }
 
   /* ---------- main ---------- */
-  .main { flex-grow: 1; min-width: 0; padding: 22px 26px 0; display: flex; flex-direction: column; gap: 18px; height: 100%; overflow: hidden; position: relative; }
+  .main { flex-grow: 1; min-width: 0; padding: 22px 26px 0; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; }
+  /* One screen at a time. The view carries the column layout the .main used to
+     own, so the topbar can still bleed to the edges of the page padding. */
+  .view { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 18px; }
   .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
   .page-head h1 { margin: 0; font-size: 27px; font-weight: 600; letter-spacing: -.4px; display: flex; align-items: center; gap: 12px; }
   .page-head p { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
@@ -121,6 +124,59 @@
   .topbar[data-stuck="true"] .lead { display: none; }
 
   .card { border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
+
+  /* ---------- Panel de Control ----------
+     Una bandeja de pendientes, no un reporte. Cada renglón es una cosa que
+     hacer: cuántas personas, qué les pasa y el botón que lo resuelve. */
+  .pend { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; gap: 10px; align-content: start; padding-bottom: 2px; }
+  .pend-row {
+    display: flex; align-items: center; gap: 18px;
+    border: 1px solid var(--line); border-radius: 13px; background: var(--surface);
+    padding: 16px 18px;
+  }
+  .pend-ico { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+  .pend-ico .ico { width: 20px; height: 20px; }
+  .pend-n { font-size: 27px; font-weight: 600; line-height: 1; letter-spacing: -.5px; font-variant-numeric: tabular-nums; min-width: 1.6ch; text-align: right; }
+  .pend-txt { min-width: 0; flex-grow: 1; }
+  .pend-txt b { display: block; font-size: 16px; font-weight: 500; color: var(--text); }
+  .pend-txt p { margin: 3px 0 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+  .pend-row .btn { flex: none; }
+  /* Severidad: el color vive en el ícono y en el número, no en un filo lateral */
+  .pend-row.bad .pend-ico { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+  .pend-row.bad .pend-n { color: var(--danger); }
+  .pend-row.warn .pend-ico { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+  .pend-row.warn .pend-n { color: var(--warn); }
+  .pend-row.calm .pend-ico { background: var(--accent-dim); color: var(--accent); }
+  .pend-row.calm .pend-n { color: var(--accent); }
+
+  .alday { display: grid; gap: 8px; justify-items: center; padding: 44px 20px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
+  .alday .disc { width: 50px; height: 50px; border-radius: 50%; background: var(--accent-dim); color: var(--accent); display: grid; place-items: center; }
+  .alday b { font-size: 17px; font-weight: 500; color: var(--text); }
+  .alday span { font-size: 14px; color: var(--muted); }
+
+  .panel-foot { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr); gap: 16px; flex: none; padding-bottom: 18px; }
+  @media (max-width: 900px) { .panel-foot { grid-template-columns: 1fr; } }
+  .pbox { border: 1px solid var(--line); border-radius: 13px; background: var(--surface); padding: 16px 18px; display: grid; gap: 10px; align-content: start; }
+  .pbox h3 { margin: 0; font-size: 15px; font-weight: 500; color: var(--text); }
+  .pbox .sub { font-size: 14px; color: var(--muted); }
+  /* Barra de uso: dos tramos, sin librería de gráficas */
+  .bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--surface-2); }
+  .bar i { display: block; }
+  .bar .si { background: var(--accent); }
+  .bar .no { background: var(--line); }
+  .barleg { display: flex; gap: 16px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .barleg span { display: inline-flex; align-items: center; gap: 6px; }
+  .barleg i { width: 9px; height: 9px; border-radius: 3px; }
+  .barleg .si i { background: var(--accent); }
+  .barleg .no i { background: var(--line); }
+  /* Últimos movimientos */
+  .movs { display: grid; gap: 1px; }
+  .mov { display: flex; align-items: baseline; gap: 10px; font-size: 13.5px; color: var(--text-2); padding: 4px 0; }
+  .mov .ico { width: 14px; height: 14px; align-self: center; color: var(--faint); flex: none; }
+  .mov b { font-weight: 500; color: var(--text); white-space: nowrap; }
+  .mov span { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mov em { margin-left: auto; font-style: normal; color: var(--faint); white-space: nowrap; font-size: 13px; }
+
 
   /* Sticky header: title, search and actions stay reachable while the list
      scrolls. Once it sticks it collapses to a single compact row so it never
@@ -208,8 +264,8 @@
   .scroll { overflow-x: auto; }
   /* Scoped to the list: the capture tables inside the full-page flows keep
      sizing to their content. */
-  .main > .tablewrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-  .main > .tablewrap > .scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  #view-users > .tablewrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  #view-users > .tablewrap > .scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
   /* Column names stay put while the rows scroll under them */
   #table thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); }
   table { border-collapse: collapse; width: 100%; }
@@ -494,6 +550,10 @@
   </aside>
 
   <main class="main">
+
+    <div class="view" id="view-panel" hidden></div>
+
+    <div class="view" id="view-users">
     <div class="topbar" id="topbar">
     <div class="page-head">
       <div>
@@ -602,6 +662,8 @@
       <button class="btn btn-ghost" id="prev">Anterior</button>
       <button class="btn btn-ghost" id="next">Siguiente</button>
     </div>
+    </div>
+
   </main>
 
   <div class="toasts" id="toasts"></div>
@@ -740,6 +802,7 @@
     size: 25,
     sort: { key: "alta", dir: "desc" },
     sel: new Set(),
+    view: "users",
     cols: { estado: true, email: true, empno: true, alta: true, phone: false, tipo: false, acceso: false },
     movs: []
   };
@@ -961,15 +1024,17 @@
     return true;
   }
 
-  let navUsers = null, navBaja = null;
+  let navUsers = null, navBaja = null, navPanel = null;
   NAV.forEach(([label, path, tag], i) => {
     const b = el("button", { html: '<svg class="ico" viewBox="0 0 24 24">' + path + '</svg><span class="lbl">' + label + '</span>' + (tag ? '<span class="tag-new">' + tag + '</span>' : '') });
     b.onclick = () => {
       if (!leavePanels()) return;
-      if (i === 1) { setTab("activos"); return; }
-      toast("Esta parte todavía no está lista en la muestra. Por ahora solo funciona Colaboradores.");
+      if (i === 0) { setView("panel"); return; }
+      if (i === 1) { setView("users"); setTab("activos"); return; }
+      toast("Esta parte todavía no está lista en la muestra. Por ahora funcionan el Panel de Control y Colaboradores.");
     };
     $("#nav").appendChild(b);
+    if (i === 0) navPanel = b;
     if (i === 1) {
       navUsers = b;
       navBaja = el("button", { class: "sub", html: '<span class="lbl">Dados de baja</span><span class="tag-count" id="c-baja" hidden>0</span>' });
@@ -978,12 +1043,226 @@
     }
   });
 
+  // Una sola vista visible a la vez. El panel se repinta cada vez que se muestra
+  // para que un cambio hecho en Colaboradores ya se vea al volver.
+  /* ---------- Panel de Control ----------
+     Contesta una sola pregunta: ¿qué necesita mi atención hoy? Todo sale del
+     mismo `state` que Colaboradores, así que dar de baja a alguien allá cambia
+     este panel al volver. Un pendiente en cero no se dibuja. */
+
+  const PEND_ICONS = {
+    rebote: '<path d="M12 4.6l8.6 14.8H3.4L12 4.6z"></path><line x1="12" y1="10" x2="12" y2="13.8"></line><line x1="12" y1="16.4" x2="12" y2="16.41"></line>',
+    sinInvitar: '<circle cx="12" cy="12" r="8.5" stroke-dasharray="2.6 3.2"></circle>',
+    espera: '<path d="M20.5 4.2L10.6 14.1"></path><path d="M20.5 4.2l-6 15.3-3.9-6.6-6.6-3.9 16.5-4.8z"></path>',
+    puerta: '<path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21H14"></path><polyline points="17 8 21 12 17 16"></polyline><line x1="21" y1="12" x2="10" y2="12"></line>',
+    telefono: '<path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5z"></path><line x1="10.5" y1="17.4" x2="13.5" y2="17.4"></line>',
+    agenda: '<rect x="3.5" y="5" width="17" height="15" rx="2"></rect><line x1="3.5" y1="10" x2="20.5" y2="10"></line><line x1="8" y1="3" x2="8" y2="7"></line><line x1="16" y1="3" x2="16" y2="7"></line>',
+    listo: '<circle cx="12" cy="12" r="8.5"></circle><polyline points="8.4 12.2 11 14.8 15.7 9.6"></polyline>'
+  };
+  const MOV_ICONS = {
+    alta: '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>',
+    baja: '<line x1="5" y1="12" x2="19" y2="12"></line>',
+    cambio: '<path d="M4 15.5h11a4 4 0 0 0 0-8H8"></path><polyline points="10.5 5 8 7.5 10.5 10"></polyline>',
+    onboarding: '<path d="M20.5 4.2L10.6 14.1"></path><path d="M20.5 4.2l-6 15.3-3.9-6.6-6.6-3.9 16.5-4.8z"></path>'
+  };
+  const pIco = k => '<svg class="ico" viewBox="0 0 24 24">' + PEND_ICONS[k] + '</svg>';
+
+  const DIAS_SIN_RESPONDER = 15;
+  const diasDesde = iso => iso ? Math.floor((Date.now() - Date.parse(iso)) / DAY) : null;
+
+  // Cada pendiente sabe a quién abarca y cómo se resuelve. El orden es el de
+  // urgencia, y es el orden en que se dibujan.
+  function pendientes() {
+    const act = state.users.filter(u => !u.baja);
+    const irA = (valor) => () => {
+      setView("users");
+      setTab("activos");
+      $("#f-onb").value = valor;
+      paintFilterCount();
+      render();
+    };
+
+    return [
+      {
+        key: "rebote", tono: "bad", icono: "rebote",
+        gente: act.filter(u => u.envio && u.envio.acuse === "fallido"),
+        titulo: "No les llegó el WhatsApp",
+        texto: "El mensaje rebotó. Revisa que el teléfono esté bien y vuelve a mandarlo.",
+        accion: g => ({
+          label: "Volver a intentar con " + (g.length === 1 ? "1" : "los " + g.length),
+          clase: "btn-danger",
+          onClick: () => invitarA(g, { reintento: true, titulo: "Volver a intentar con ", confirm: "Sí, volver a mandar" })
+        })
+      },
+      {
+        key: "sinInvitar", tono: "warn", icono: "sinInvitar",
+        gente: act.filter(u => u.onboarding === "Pendiente"),
+        titulo: "Falta invitarlas",
+        texto: "Nunca les ha llegado la invitación para entrar a Veeda.",
+        accion: g => ({ label: "Invitar a " + (g.length === 1 ? "1" : "los " + g.length), clase: "btn-primary", onClick: () => invitarA(g) })
+      },
+      {
+        key: "espera", tono: "warn", icono: "espera",
+        gente: act.filter(u => u.onboarding === "Enviado" && u.envio && diasDesde(u.envio.fecha) > DIAS_SIN_RESPONDER),
+        titulo: "Invitadas hace más de " + DIAS_SIN_RESPONDER + " días",
+        texto: "Les llegó el mensaje pero no han contestado.",
+        accion: g => ({ label: "Volver a invitar", clase: "btn-ghost", onClick: () => invitarA(g, { reintento: true, titulo: "Volver a invitar a ", confirm: "Sí, volver a mandar" }) })
+      },
+      {
+        key: "puerta", tono: "calm", icono: "puerta",
+        gente: act.filter(u => u.onboarding === "Completado" && !u.acceso),
+        titulo: "Aceptaron y no han entrado",
+        texto: "Ya aceptaron pero todavía no han usado Veeda ni una vez.",
+        accion: () => ({ label: "Ver quiénes son", clase: "btn-ghost", onClick: irA("acepto") })
+      },
+      {
+        key: "telefono", tono: "bad", icono: "telefono",
+        gente: act.filter(u => !digits(u.phone)),
+        titulo: "Sin teléfono registrado",
+        texto: "Sin número de WhatsApp no hay manera de mandarles la invitación.",
+        accion: g => ({
+          label: "Corregir",
+          clase: "btn-ghost",
+          onClick: () => {
+            setView("users"); setTab("activos");
+            state.sel = new Set(g.map(u => u.id));
+            render();
+            openEditor();
+          }
+        })
+      },
+      {
+        key: "agenda", tono: "warn", icono: "agenda",
+        gente: state.users.filter(u => u.baja && u.citasFuturas > 0),
+        titulo: "Dadas de baja con cita pendiente",
+        texto: "Ya no tienen acceso, pero su cita sigue agendada.",
+        accion: () => ({ label: "Ver quiénes son", clase: "btn-ghost", onClick: () => { setView("users"); setTab("baja"); } })
+      }
+    ];
+  }
+
+  function renderPanel() {
+    const box = $("#view-panel");
+    box.innerHTML =
+      '<div class="topbar">' +
+        '<div class="page-head">' +
+          '<div><h1>Panel de Control</h1>' +
+          '<p class="lead">Lo que necesita tu atención hoy.</p></div>' +
+          '<div class="actions"><button class="btn btn-primary" id="p-add">' +
+            '<svg class="ico ico-s" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"></path><line x1="18" y1="7" x2="18" y2="13"></line><line x1="15" y1="10" x2="21" y2="10"></line></svg>' +
+            'Agregar colaboradores</button></div>' +
+        '</div>' +
+        '<span class="resline" id="p-res"></span>' +
+      '</div>' +
+      '<div class="pend" id="p-pend"></div>' +
+      '<div class="panel-foot">' +
+        '<div class="pbox" id="p-uso"></div>' +
+        '<div class="pbox" id="p-movs"></div>' +
+      '</div>';
+
+    $("#p-add").onclick = () => { hubReturn = false; setView("users"); setTab("activos"); openModal("uno"); };
+
+    const act = state.users.filter(u => !u.baja);
+    pintarResumen($("#p-res"), act);
+    pintarPendientes($("#p-pend"));
+    pintarUso($("#p-uso"), act);
+    pintarMovs($("#p-movs"));
+  }
+
+  // Misma línea, mismo vocabulario y mismos iconos que la lista de Colaboradores.
+  function pintarResumen(box, act) {
+    box.innerHTML = "";
+    const cuenta = {};
+    act.forEach(u => { const e = estado(u).label; cuenta[e] = (cuenta[e] || 0) + 1; });
+    box.appendChild(document.createTextNode(plural(act.length, "colaborador", "colaboradores")));
+    ESTADOS.forEach(e => {
+      const n = cuenta[e.label] || 0;
+      if (!n) return;
+      box.appendChild(document.createTextNode(" · "));
+      const t = el("span", { class: "tal " + e.cls });
+      t.innerHTML = '<svg class="ico" viewBox="0 0 24 24">' + ESTADO_ICONS[e.label] + '</svg><b>' + n + '</b>' + esc(e.label);
+      box.appendChild(t);
+    });
+  }
+
+  function pintarPendientes(box) {
+    box.innerHTML = "";
+    const vivos = pendientes().filter(p => p.gente.length);
+
+    if (!vivos.length) {
+      const ok = el("div", { class: "alday" });
+      ok.innerHTML = '<div class="disc"><svg class="ico" viewBox="0 0 24 24" style="width:24px;height:24px">' + PEND_ICONS.listo + '</svg></div>' +
+        '<b>Todo al día</b><span>No hay nada pendiente por ahora.</span>';
+      box.appendChild(ok);
+      return;
+    }
+
+    vivos.forEach(p => {
+      const g = p.gente;
+      const a = p.accion(g);
+      const row = el("div", { class: "pend-row " + p.tono });
+      row.innerHTML =
+        '<div class="pend-ico">' + pIco(p.icono) + '</div>' +
+        '<span class="pend-n">' + g.length + '</span>' +
+        '<div class="pend-txt"><b>' + esc(p.titulo) + '</b><p>' + esc(p.texto) + '</p></div>';
+      const b = el("button", { class: "btn " + a.clase }, a.label);
+      b.onclick = a.onClick;
+      row.appendChild(b);
+      box.appendChild(row);
+    });
+  }
+
+  function pintarUso(box, act) {
+    const usaron = act.filter(u => u.servicio).length;
+    const nunca = act.length - usaron;
+    const pct = act.length ? Math.round((usaron / act.length) * 100) : 0;
+    box.innerHTML =
+      '<h3>Uso de servicios</h3>' +
+      '<p class="sub">' + usaron + ' de ' + act.length + ' ya usaron algo de Veeda.</p>' +
+      '<div class="bar"><i class="si" style="width:' + pct + '%"></i><i class="no" style="width:' + (100 - pct) + '%"></i></div>' +
+      '<div class="barleg"><span class="si"><i></i>' + usaron + ' ya usó algo</span>' +
+      '<span class="no"><i></i>' + nunca + ' nunca ha usado</span></div>';
+  }
+
+  function pintarMovs(box) {
+    const nombre = {};
+    state.users.forEach(u => { nombre[u.id] = fullName(u); });
+    const ult = state.movs.slice().sort((a, b) => Date.parse(b.fecha) - Date.parse(a.fecha)).slice(0, 5);
+    box.innerHTML = '<h3>Lo último que pasó</h3>';
+    if (!ult.length) { box.appendChild(el("p", { class: "sub" }, "Todavía no hay movimientos.")); return; }
+    const list = el("div", { class: "movs" });
+    ult.forEach(m => {
+      const row = el("div", { class: "mov" });
+      row.innerHTML = '<svg class="ico" viewBox="0 0 24 24">' + (MOV_ICONS[m.tipo] || MOV_ICONS.cambio) + '</svg>' +
+        '<b>' + esc(nombre[m.userId] || "—") + '</b>' +
+        '<span>' + esc(m.detalle) + '</span>' +
+        '<em>' + esc(fmtWhen(m.fecha)) + '</em>';
+      list.appendChild(row);
+    });
+    box.appendChild(list);
+  }
+
+  function setView(v) {
+    state.view = v;
+    $("#view-panel").hidden = v !== "panel";
+    $("#view-users").hidden = v !== "users";
+    if (v === "panel") {
+      navPanel.setAttribute("aria-current", "page");
+      navUsers.removeAttribute("aria-current");
+      navBaja.removeAttribute("aria-current");
+      renderPanel();
+    } else {
+      navPanel.removeAttribute("aria-current");
+    }
+  }
+
   function setTab(tab) {
     state.tab = tab;
     state.page = 1;
     state.sel.clear();
     if (tab === "baja") { navUsers.removeAttribute("aria-current"); navBaja.setAttribute("aria-current", "page"); }
     else { navBaja.removeAttribute("aria-current"); navUsers.setAttribute("aria-current", "page"); }
+    navPanel.removeAttribute("aria-current");
     $("#page-title").textContent = tab === "baja" ? "Dados de baja" : "Colaboradores";
     render();
   }
@@ -1184,6 +1463,7 @@
     }
 
     paintTally(rows, selCount);
+    if (state.view === "panel") renderPanel();
   }
 
   /* ---------- wiring ---------- */
@@ -1211,22 +1491,27 @@
   /* ---------- welcome message ----------
      Never fires blind: whoever cannot receive it is left out on purpose and the
      dialog says who and why before a single message goes out. */
-  function planOnboarding(users) {
+  // `reintento` es el caso del panel: ella YA sabe que el envío anterior rebotó
+  // y está pidiendo a propósito que se vuelva a mandar. Las otras guardas siguen.
+  function planOnboarding(users, opts) {
+    const reintento = !!(opts && opts.reintento);
     const send = [], skip = [];
     users.forEach(u => {
       if (u.onboarding === "Completado") { skip.push({ u: u, why: "ya usa Veeda" }); return; }
       if (!digits(u.phone)) { skip.push({ u: u, why: "sin teléfono registrado" }); return; }
-      if (u.envio && u.envio.acuse === "fallido") { skip.push({ u: u, why: "el envío anterior falló: " + (u.envio.motivo || "revisa el número") }); return; }
+      if (!reintento && u.envio && u.envio.acuse === "fallido") { skip.push({ u: u, why: "el envío anterior falló: " + (u.envio.motivo || "revisa el número") }); return; }
       const last = u.envio && u.envio.fecha ? Date.parse(u.envio.fecha) : 0;
-      if (last && Date.now() - last < DAY) { skip.push({ u: u, why: "se le envió " + fmtWhen(u.envio.fecha) }); return; }
+      if (!reintento && last && Date.now() - last < DAY) { skip.push({ u: u, why: "se le envió " + fmtWhen(u.envio.fecha) }); return; }
       send.push(u);
     });
     return { send: send, skip: skip };
   }
 
-  $("#btn-onboarding").onclick = () => {
-    const selUsers = state.users.filter(u => state.sel.has(u.id) && !u.baja);
-    const plan = planOnboarding(selUsers);
+  // Llamada desde la barra de selección y desde la bandeja del panel. `opts.titulo`
+  // deja que el panel diga "Volver a intentar" donde la lista dice "Invitar".
+  function invitarA(users, opts) {
+    opts = opts || {};
+    const plan = planOnboarding(users, opts);
     const byWhy = {};
     plan.skip.forEach(x => { (byWhy[x.why] = byWhy[x.why] || []).push(x.u); });
 
@@ -1241,7 +1526,7 @@
 
     if (!plan.send.length) {
       openConfirm({
-        title: "No se le puede mandar a nadie de los que marcaste",
+        title: "No se le puede mandar a nadie",
         lead: "Abajo dice por qué en cada caso. Corrige eso y vuelve a intentar.",
         body: body
       });
@@ -1249,10 +1534,10 @@
     }
 
     openConfirm({
-      title: "Invitar por WhatsApp a " + plural(plan.send.length, "colaborador", "colaboradores"),
+      title: (opts.titulo || "Invitar por WhatsApp a ") + plural(plan.send.length, "colaborador", "colaboradores"),
       lead: "Le va a llegar un mensaje de WhatsApp con el enlace para entrar a Veeda.",
       body: body,
-      confirm: "Sí, invitar",
+      confirm: opts.confirm || "Sí, invitar",
       onConfirm: () => {
         plan.send.forEach(u => {
           u.onboarding = "Enviado";
@@ -1260,10 +1545,15 @@
           logMov(u.id, "onboarding", "Bienvenida enviada por WhatsApp");
         });
         const n = plan.send.length;
-        state.sel.clear(); render();
+        state.sel.clear();
+        render();
         toast("Invitación enviada a " + plural(n, "colaborador", "colaboradores") + ". Puedes volver a mandarla mañana si no responde.");
       }
     });
+  }
+
+  $("#btn-onboarding").onclick = () => {
+    invitarA(state.users.filter(u => state.sel.has(u.id) && !u.baja));
   };
 
   /* ---------- offboarding ----------
