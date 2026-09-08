@@ -1,0 +1,2606 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Veeda Alta de Colaboradores</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  .app {
+    --bg: #0c1512;
+    --surface: #0e1a15;
+    --surface-2: #12241d;
+    --sidebar: #0a1310;
+    --line: #1c3329;
+    --line-soft: #16281f;
+    --text: #e6efea;
+    --text-2: #a5bcb2;
+    --muted: #8fa89c;
+    --faint: #5f7a6f;
+    --accent: #a9d6bb;
+    --accent-soft: #cbe7d8;
+    --accent-dim: #17362a;
+    --field: #0f1e18;
+    --danger: #d98d8d;
+    --danger-line: #4a2626;
+    --warn: #d8c98a;
+    --info-bg: #0d2337;
+    --info-line: #1d4b6b;
+    --info-text: #c9def0;
+    --code-bg: #2f3aa0;
+    --code-text: #dfe5ff;
+    --shadow: 0 24px 60px rgba(0,0,0,.55);
+  }
+  .app[data-mode="light"] {
+    --bg: #f3f7f4;
+    --surface: #ffffff;
+    --surface-2: #eef4f0;
+    --sidebar: #ffffff;
+    --line: #dbe7e0;
+    --line-soft: #e8efeb;
+    --text: #10231b;
+    --text-2: #44604f;
+    --muted: #63806e;
+    --faint: #93aa9c;
+    --accent: #2e7d55;
+    --accent-soft: #d7ecdf;
+    --accent-dim: #eaf5ee;
+    --field: #ffffff;
+    --danger: #b04141;
+    --danger-line: #e8cdcd;
+    --warn: #916f1b;
+    --info-bg: #eef5fb;
+    --info-line: #c6dcee;
+    --info-text: #234a63;
+    --code-bg: #e3e7ff;
+    --code-text: #2b3585;
+    --shadow: 0 20px 50px rgba(16,35,27,.14);
+  }
+
+  body { background: #f3f7f4; margin: 0; }
+  .app *, .app *::before, .app *::after { box-sizing: border-box; }
+
+  .app {
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app button:not(.btn) { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  .app .btn { font-family: inherit; background: none; cursor: pointer; }
+  .app input, .app select { font: inherit; color: inherit; }
+  .app :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  .ico { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .ico-s { width: 14px; height: 14px; }
+
+  /* ---------- sidebar ---------- */
+  .side {
+    width: 252px; flex: none; background: var(--sidebar); border-right: 1px solid var(--line-soft);
+    display: flex; flex-direction: column; padding: 24px 0 16px; height: 100%; overflow-y: auto;
+  }
+  .brand { padding: 0 22px 22px; display: flex; align-items: center; gap: 7px; }
+  .brand span { font-size: 32px; font-weight: 600; letter-spacing: -1.2px; color: var(--accent); line-height: 1; }
+  .brand i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); align-self: flex-end; margin-bottom: 3px; }
+  .company { padding: 0 18px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .company b { font-size: 16px; font-weight: 500; }
+  .nav { display: flex; flex-direction: column; gap: 2px; padding: 0 12px; }
+  .nav button {
+    display: flex; align-items: center; gap: 11px; padding: 12px 12px; border-radius: 9px;
+    font-size: 15px; color: var(--text-2); text-align: left; width: 100%; transition: background .13s, color .13s;
+  }
+  .nav button:hover { background: var(--accent-dim); color: var(--text); }
+  .nav button[aria-current="page"] { background: var(--accent-soft); color: #0c1512; font-weight: 500; }
+  .app[data-mode="light"] .nav button[aria-current="page"] { color: #12241d; }
+  .nav .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* "Dados de baja" lives as a sub-page of Colaboradores instead of a tab */
+  .nav button.sub { padding: 10px 12px 10px 42px; font-size: 14px; }
+  .tag-count { margin-left: auto; font-size: 11px; color: var(--faint); background: var(--surface-2); padding: 1px 8px; border-radius: 20px; }
+  .nav button[aria-current="page"] .tag-count { background: rgba(12,21,18,.13); color: inherit; }
+  .tag-new { font-size: 11px; font-weight: 500; background: var(--accent-soft); color: #0c1512; padding: 1px 8px; border-radius: 20px; margin-left: auto; }
+  .app[data-mode="light"] .tag-new { color: #12241d; }
+  .nav button[aria-current="page"] .tag-new { background: #0c1512; color: var(--accent-soft); }
+  .app[data-mode="light"] .nav button[aria-current="page"] .tag-new { background: var(--accent); color: #ffffff; }
+  .side-foot { margin-top: auto; padding: 0 12px; display: flex; flex-direction: column; gap: 12px; }
+  .ideas { padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; display: flex; align-items: center; gap: 11px; color: var(--text-2); }
+  .ideas .dot { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+  .who { display: flex; align-items: center; gap: 11px; padding: 0 6px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-dim); color: var(--accent-soft); font-size: 12px; display: grid; place-items: center; }
+  .app[data-mode="light"] .avatar { color: var(--accent); }
+  .ver { display: flex; align-items: center; justify-content: space-between; padding: 0 6px; font-size: 11px; color: var(--faint); }
+  .ver button { font-size: 12.5px; color: var(--faint); text-decoration: underline; text-underline-offset: 3px; }
+  .ver button:hover { color: var(--text-2); }
+
+  /* ---------- main ---------- */
+  .main { flex-grow: 1; min-width: 0; padding: 22px 26px 0; display: flex; flex-direction: column; gap: 18px; height: 100%; overflow: hidden; position: relative; }
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .page-head h1 { margin: 0; font-size: 27px; font-weight: 600; letter-spacing: -.4px; display: flex; align-items: center; gap: 12px; }
+  .page-head p { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
+  .lead { margin: 5px 0 0; font-size: 14px; color: var(--muted); }
+  .topbar[data-stuck="true"] .lead { display: none; }
+
+  .card { border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
+
+  /* Sticky header: title, search and actions stay reachable while the list
+     scrolls. Once it sticks it collapses to a single compact row so it never
+     eats the table — labels drop, the icons stay. */
+  .topbar {
+    flex: none; position: relative; z-index: 30; background: var(--bg);
+    margin: -22px -26px 0; padding: 22px 26px 2px;
+    display: grid; gap: 18px;
+    transition: padding .16s ease;
+  }
+  .topbar[data-stuck="true"] {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding-top: 10px; padding-bottom: 10px;
+    box-shadow: 0 10px 18px -14px rgba(0,0,0,.45);
+  }
+  .app[data-mode="light"] .topbar[data-stuck="true"] { box-shadow: 0 10px 18px -14px rgba(16,35,27,.28); }
+  .topbar[data-stuck="true"] .page-head { flex: none; gap: 12px; }
+  .topbar[data-stuck="true"] .page-head h1 { font-size: 17px; letter-spacing: -.1px; }
+  .topbar[data-stuck="true"] .listhead { flex-grow: 1; min-width: 300px; gap: 0; }
+  .topbar[data-stuck="true"] .resline { display: none; }
+  /* One line, no wrapping: the collapsed bar must not grow back into two rows */
+  .topbar[data-stuck="true"] .rowline { flex-wrap: nowrap; }
+  .topbar[data-stuck="true"] .searchwrap { max-width: 460px; min-width: 160px; }
+  /* Labels never disappear: only the padding tightens */
+  .topbar[data-stuck="true"] .btn { padding: 9px 13px; }
+  .topbar[data-stuck="true"] .linkbtn { padding: 9px 8px; }
+  @media (prefers-reduced-motion: reduce) { .topbar { transition: none } }
+
+  .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 9px; font-size: 14px; border: 1px solid transparent; transition: background .13s, border-color .13s, color .13s; }
+  .btn-ghost { color: var(--text-2); border-color: var(--line); }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+  /* .app scope needed: ".app button" resets the background and would win on specificity */
+  .app .btn-primary { background: var(--accent); color: #0c1512; font-weight: 500; }
+  .app[data-mode="light"] .btn-primary { color: #ffffff; }
+  .btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn-danger { color: var(--danger); border-color: var(--danger-line); }
+  .btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+  /* The safer of two ways forward: reads as an action, not as "go back". */
+  .btn-soft { color: var(--accent); border-color: var(--accent); }
+  .btn-soft:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .linkbtn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 8px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--accent); }
+  .linkbtn:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Bulk actions only exist while rows are selected; this bar replaces the search row */
+  .listhead { display: grid; gap: 10px; }
+  .selbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--accent-dim); border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+    border-radius: 12px; padding: 9px 12px;
+  }
+  .selbar b { font-size: 14px; font-weight: 500; }
+  .resline { font-size: 13.5px; color: var(--muted); }
+
+  .filters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+  .field { border: 1px solid var(--line); background: var(--field); border-radius: 9px; padding: 11px 12px; font-size: 14px; width: 100%; color: var(--text); }
+  select.field { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--faint) 50%), linear-gradient(135deg, var(--faint) 50%, transparent 50%); background-position: right 14px center, right 9px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 28px; cursor: pointer; }
+  .field::placeholder { color: var(--faint); }
+  .field-lbl { font-size: 13px; color: var(--muted); display: block; padding-bottom: 5px; }
+  .rowline { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  /* Collapsible filters panel (opened from the "Filtros" button) */
+  .filterpanel { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 16px; display: grid; gap: 14px; flex: none; max-height: 42vh; overflow: auto; }
+  .btn .count { background: var(--accent); color: #0c1512; padding: 0 7px; border-radius: 20px; font-size: 12.5px; font-weight: 500; line-height: 18px; }
+  .app[data-mode="light"] .btn .count { color: #ffffff; }
+  .searchwrap { position: relative; flex-grow: 1; min-width: 240px; max-width: 520px; }
+  .searchwrap .ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+  .searchwrap .field { padding-left: 36px; }
+
+  .colmenu { position: relative; }
+  .colmenu-pop { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 8px; box-shadow: var(--shadow); z-index: 40; width: 200px; display: grid; gap: 2px; }
+  .colmenu-pop label { display: flex; align-items: center; gap: 10px; padding: 9px 9px; border-radius: 7px; font-size: 14px; color: var(--text-2); cursor: pointer; }
+  .colmenu-pop label:hover { background: var(--surface-2); color: var(--text); }
+  input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; cursor: pointer; }
+
+  .tablewrap { border: 1px solid var(--line-soft); border-radius: 14px; background: var(--surface); overflow: hidden; }
+  .scroll { overflow-x: auto; }
+  /* Scoped to the list: the capture tables inside the full-page flows keep
+     sizing to their content. */
+  .main > .tablewrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .main > .tablewrap > .scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  /* Column names stay put while the rows scroll under them */
+  #table thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; }
+  thead th { background: transparent; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-2); text-align: left; padding: 0; white-space: nowrap; }
+  thead th.plain { padding: 15px 14px; }
+  thead th button { display: flex; align-items: center; gap: 7px; padding: 15px 14px; width: 100%; font-size: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
+  thead th button:hover { color: var(--text-2); }
+  thead th .arrow { color: var(--faint); font-size: 11px; }
+  thead th[aria-sort] .arrow { color: var(--accent); }
+  th.sel, td.sel { width: 46px; padding-left: 18px; }
+  tbody td { padding: 16px 14px; border-bottom: 1px solid var(--line-soft); font-size: 14px; color: var(--text-2); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover td { background: var(--surface-2); }
+  tbody tr[data-selected="true"] td { background: var(--accent-dim); }
+  td .name { color: var(--text); font-weight: 500; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 20px; font-size: 12.5px; border: 1px solid var(--line); color: var(--text-2); }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .chip.ok { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .chip.pend { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+  .chip.off { color: var(--faint); }
+  .chip.bad { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+  .empty { padding: 54px 20px; text-align: center; color: var(--muted); font-size: 14px; display: grid; gap: 6px; justify-items: center; }
+  .pager { display: flex; align-items: center; gap: 14px; font-size: 14px; color: var(--text-2); flex-wrap: wrap; flex: none; padding-bottom: 18px; }
+  /* How many rows a page holds; lives in the pager so it is always in reach */
+  .perpage { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+  .perpage select { width: auto; padding: 8px 28px 8px 12px; font-size: 13.5px; color: var(--text-2); }
+
+  /* ---------- modal ---------- */
+  .veil { position: fixed; inset: 0; background: rgba(4,10,8,.62); backdrop-filter: blur(2px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+  .app[data-mode="light"] .veil { background: rgba(18,36,29,.35); }
+  .sheet {
+    background: var(--bg); border: 1px solid var(--line); border-bottom: 0; border-radius: 18px 18px 0 0;
+    width: min(1360px, 100%); max-height: 88vh; display: flex; flex-direction: column; padding: 0 26px 20px;
+    box-shadow: var(--shadow); animation: rise .22s cubic-bezier(.2,.8,.3,1);
+  }
+  @keyframes rise { from { transform: translateY(26px); opacity: .4 } }
+  @media (prefers-reduced-motion: reduce) { .sheet { animation: none } }
+  .grab { width: 40px; height: 3px; border-radius: 3px; background: var(--line); margin: 10px auto 0; }
+  .sheet-x { position: absolute; }
+  .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 0 16px; }
+  .sheet-head h2 { margin: 0 0 3px; font-size: 22px; font-weight: 600; letter-spacing: -.3px; }
+  .sheet-head p { margin: 0; font-size: 14px; color: var(--muted); }
+  .segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-bottom: 16px; }
+  .segmented button { display: flex; align-items: center; justify-content: center; gap: 9px; padding: 13px 0; border-radius: 10px; font-size: 14px; border: 1px solid var(--line-soft); background: var(--surface-2); color: var(--text-2); }
+  .segmented button[aria-selected="true"] { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+  .sheet-body { overflow: auto; flex-grow: 1; padding-bottom: 4px; }
+  .sheet-foot { padding-top: 16px; display: flex; align-items: center; gap: 14px; }
+  .sheet-foot .btn { flex-grow: 1; justify-content: center; padding: 15px 0; font-size: 15px; }
+  /* ---------- one-person form ----------
+     The main way in. Fields stay stacked with their own label and their own
+     error line, grouped under a plain question, so nothing has to be read
+     across a row of eleven columns. */
+  .form1 { max-width: 900px; display: grid; gap: 24px; }
+  .fgroup { display: grid; gap: 14px; }
+  .fgroup h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text); }
+  .frow { display: grid; gap: 14px 16px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .frow.two { grid-template-columns: minmax(260px, 1.4fr) minmax(210px, 1fr); }
+  .fbox { display: grid; gap: 7px; align-content: start; }
+  .fbox label { font-size: 14.5px; color: var(--text); }
+  .fbox label span { color: var(--faint); }
+  .fbox .field { padding: 13px 12px; font-size: 15px; }
+  .ferr { font-size: 13.5px; color: var(--danger); line-height: 1.45; }
+  .fhelp { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+  .fphone { display: grid; grid-template-columns: 104px 1fr; gap: 10px; }
+  .form1-foot { display: flex; gap: 12px; flex-wrap: wrap; padding-top: 2px; }
+  .form1-foot .btn { padding: 13px 20px; font-size: 15px; }
+  .saved { background: var(--surface-2); border-radius: 13px; padding: 14px 16px; font-size: 14px; line-height: 1.6; color: var(--text-2); }
+  .saved b { color: var(--text); font-weight: 600; }
+  .switch { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .switch button { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; font-size: 14px; }
+
+  .hint { font-size: 13.5px; color: var(--muted); line-height: 1.6; padding-bottom: 14px; }
+
+  .info { display: flex; gap: 11px; background: var(--info-bg); border: 1px solid var(--info-line); border-radius: 11px; padding: 14px 16px; margin-bottom: 16px; }
+  .info h3 { margin: 0 0 7px; font-size: 12.5px; font-weight: 500; color: var(--info-text); }
+  .info p { margin: 0 0 6px; font-size: 13.5px; color: var(--info-text); line-height: 1.65; }
+  .info p:last-child { margin-bottom: 0; }
+  code { font-family: 'IBM Plex Mono', ui-monospace, monospace; background: var(--code-bg); color: var(--code-text); padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+
+  .drop { border: 1.5px dashed var(--line); border-radius: 13px; min-height: 260px; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 30px; text-align: center; transition: border-color .15s, background .15s; cursor: pointer; }
+  .drop:hover, .drop[data-over="true"] { border-color: var(--accent); background: var(--accent-dim); }
+  .drop .disc { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-dim); display: grid; place-items: center; color: var(--accent); }
+  .app[data-mode="light"] .drop .disc { background: var(--accent-soft); }
+  .drop b { font-size: 16px; font-weight: 500; }
+  .drop small { font-size: 14px; color: var(--muted); }
+
+  .report { display: grid; gap: 12px; }
+  .report-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .report-head .fname { display: flex; align-items: center; gap: 9px; font-weight: 500; }
+  .tally { display: flex; gap: 8px; }
+  .tally span { font-size: 13px; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--line); color: var(--text-2); }
+  .tally .good { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .tally .bad { color: var(--danger); border-color: var(--danger-line); }
+  .errlist { border: 1px solid var(--danger-line); border-radius: 11px; padding: 12px 14px; display: grid; gap: 6px; max-height: 150px; overflow: auto; }
+  .errlist div { font-size: 13.5px; color: var(--danger); }
+
+  /* ---------- option-list page ("Más opciones" lands here first) ---------- */
+  .hub { position: absolute; inset: 0; z-index: 60; background: var(--bg); color: var(--text); overflow: auto; font-family: 'Outfit', system-ui, sans-serif; }
+  .hub-in { max-width: 920px; margin: 0 auto; padding: 28px 26px 64px; }
+  .crumb { display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--muted); padding-bottom: 12px; }
+  .crumb button { color: var(--accent); font-weight: 500; border-radius: 6px; }
+  .crumb button:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .hub h1 { margin: 0 0 28px; font-size: 27px; font-weight: 600; letter-spacing: -.4px; }
+  .hub h2 { margin: 30px 0 12px; font-size: 17px; font-weight: 600; letter-spacing: -.2px; }
+  .hub h2:first-of-type { margin-top: 0; }
+  /* .app scope needed: ".app button" resets border and background, and wins on specificity */
+  .app .opt {
+    display: flex; align-items: center; gap: 16px; width: 100%; text-align: left;
+    padding: 18px 20px; border: 1px solid var(--line); border-radius: 13px;
+    background: var(--surface); margin-bottom: 12px;
+    transition: border-color .13s, background .13s;
+  }
+  .app .opt:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .opt > .ico { width: 22px; height: 22px; color: var(--accent); align-self: flex-start; margin-top: 1px; }
+  .opt .txt { min-width: 0; }
+  .opt b { display: block; font-size: 16px; font-weight: 500; }
+  .opt p { margin: 4px 0 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+  .opt .go { margin-left: auto; color: var(--accent); flex: none; }
+  .opt-tag { display: inline-block; font-size: 12.5px; background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); border-radius: 20px; padding: 2px 10px; margin-left: 9px; vertical-align: 1px; }
+
+  /* ---------- full-screen spreadsheet editor ---------- */
+  /* Same frame as the option list: these are pages of the section, not takeovers */
+  .editor {
+    position: absolute; inset: 0; z-index: 60; background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; font-family: 'Outfit', system-ui, sans-serif;
+  }
+  .ed-top { display: flex; align-items: center; gap: 16px; padding: 12px 18px; background: var(--surface); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .ed-back { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: var(--text-2); flex: none; }
+  .ed-back:hover { background: var(--surface-2); color: var(--text); }
+  .ed-title h2 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.2px; }
+  .ed-title p { margin: 1px 0 0; font-size: 13.5px; color: var(--muted); }
+  .ed-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ed-bar { display: flex; align-items: center; gap: 12px; padding: 8px 18px; background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+  .ed-ref {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: var(--text-2);
+    background: var(--field); border: 1px solid var(--line); border-radius: 7px; padding: 4px 10px; min-width: 62px; text-align: center;
+  }
+  .ed-fx { font-style: italic; color: var(--faint); padding-right: 2px; }
+  .ed-val { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46vw; }
+  .ed-legend { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .ed-grid { flex-grow: 1; overflow: auto; background: var(--surface); }
+  .ed-tip { padding: 10px 18px 0; font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+  /* Scrolling body for the full-page capture flows */
+  .ed-body { flex-grow: 1; overflow: auto; padding: 16px 18px 24px; }
+
+  table.grid { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; }
+  table.grid th, table.grid td { border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); padding: 0; }
+  table.grid th:last-child, table.grid td:last-child { border-right: 0; }
+  table.grid tbody tr:last-child td { border-bottom: 0; }
+  table.grid thead .letters th { position: sticky; top: 0; z-index: 3; background: var(--surface-2); }
+  table.grid thead .names th {
+    position: sticky; top: 25px; z-index: 3; background: var(--surface-2); color: var(--muted);
+    font-size: 13px; font-weight: 500;
+    padding: 9px 10px; text-align: left; white-space: nowrap;
+  }
+  table.grid .gut {
+    position: sticky; left: 0; z-index: 2; background: var(--surface-2); color: var(--faint);
+    text-align: center; font-size: 11.5px; width: 46px; min-width: 46px; padding: 0 6px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  table.grid thead .gut { z-index: 4; }
+  table.grid thead .names th { border-bottom: 1px solid var(--line); }
+  table.grid td { background: var(--field); height: 38px; }
+  /* frozen first column, the way a spreadsheet keeps the name in view */
+  table.grid .col1 { position: sticky; left: 46px; z-index: 2; }
+  table.grid thead .col1 { z-index: 4; }
+  table.grid thead .letters th { font-size: 10.5px; letter-spacing: .1em; color: var(--faint); padding: 4px 10px; text-align: center; }
+  table.grid thead .letters th.gut { padding: 4px 6px; }
+  table.grid td[data-dirty="true"] { background: var(--accent-dim); }
+  table.grid td[data-bad="true"] { background: color-mix(in srgb, var(--danger) 13%, var(--field)); }
+  table.grid td[data-active="true"] { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 3px; }
+  .cellin { width: 100%; border: 0; background: transparent; padding: 9px 10px; font-size: 13.5px; color: var(--text); }
+  .cellin:focus, .cellin:focus-visible { outline: none; }
+  .cellin::placeholder { color: var(--faint); }
+  select.cellin { appearance: none; cursor: pointer; padding-right: 22px;
+    background-image: linear-gradient(45deg, transparent 50%, var(--faint) 50%), linear-gradient(135deg, var(--faint) 50%, transparent 50%);
+    background-position: right 11px center, right 6px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+  .gridadd { display: flex; align-items: center; gap: 8px; padding: 12px 14px; font-size: 13.5px; color: var(--text-2); width: 100%; border-bottom: 1px solid var(--line-soft); }
+  .gridadd:hover { background: var(--surface-2); color: var(--text); }
+  .legend { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; background: var(--accent-dim); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+  .legend.bad i { background: color-mix(in srgb, var(--danger) 13%, var(--field)); border-color: var(--danger-line); }
+  .footnote { font-size: 13.5px; color: var(--muted); white-space: nowrap; }
+
+  /* The capture table always fits the page: fixed layout so the columns share
+     the width and shrink together, never a horizontal scrollbar. */
+  table.rowtable { table-layout: fixed; width: 100%; }
+  .rowtable td { padding: 6px 4px; border: 0; }
+  .rowtable td:first-child { padding-left: 12px; color: var(--muted); font-size: 13.5px; }
+  .rowtable .field { font-size: 13.5px; padding: 10px 8px; width: 100%; min-width: 0; }
+  .rowtable select.field { padding-right: 22px; background-position: right 11px center, right 6px center; }
+  /* the native date field has its own width floor; keep its box tight */
+  .rowtable input[type="date"] { font-size: 12.5px; padding-left: 6px; padding-right: 4px; }
+  .rowtable .field[data-bad="true"] { border-color: var(--danger); }
+  .rowtable thead th { padding: 10px 4px; white-space: normal; font-size: 12.5px; line-height: 1.3; }
+  .rowtable thead th:first-child { padding-left: 12px; }
+  .rowtable td:last-child, .rowtable thead th:last-child { padding-right: 6px; }
+  .rowtable .icon-btn { padding: 6px; margin: 0 auto; }
+  .icon-btn { padding: 7px; border-radius: 8px; color: var(--faint); display: grid; place-items: center; }
+  .icon-btn:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+  .icon-btn.plain:hover { color: var(--text); background: var(--surface-2); }
+  .addrow { margin-top: 10px; }
+
+  /* Confirmation dialog — centred, so it reads as a decision and not as a panel.
+     Own id instead of .veil: closeModal() removes the first .veil it finds. */
+  #dlg-veil {
+    position: fixed; inset: 0; z-index: 160; padding: 20px;
+    background: rgba(4,10,8,.62); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .app[data-mode="light"] #dlg-veil { background: rgba(18,36,29,.35); }
+  .dialog {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 16px;
+    width: min(540px, 100%); max-height: 86vh; padding: 22px 24px 20px;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: var(--shadow); animation: rise .18s cubic-bezier(.2,.8,.3,1);
+  }
+  .dialog h2 { margin: 0 0 6px; font-size: 20px; font-weight: 600; letter-spacing: -.2px; }
+  .dlg-lead { margin: 0 0 14px; font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .dlg-names { display: grid; gap: 7px; background: var(--surface-2); border-radius: 11px; padding: 12px 14px; margin-bottom: 14px; max-height: 172px; overflow: auto; }
+  .dlg-names div { font-size: 14px; color: var(--text); display: flex; gap: 12px; align-items: baseline; }
+  .dlg-names em { margin-left: auto; font-style: normal; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .note { border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; font-size: 14px; line-height: 1.6; }
+  .note b { display: block; font-weight: 500; padding-bottom: 3px; }
+  .note.warn { background: color-mix(in srgb, var(--warn) 13%, transparent); color: var(--text-2); }
+  .note.warn b { color: var(--warn); }
+  .note.calm { background: var(--surface-2); color: var(--text-2); }
+  .dlg-body { overflow: auto; flex: 1 1 auto; }
+  .dlg-foot { display: flex; gap: 10px; justify-content: flex-end; padding-top: 14px; flex-wrap: wrap; flex: none; }
+  .dlg-foot.stack { flex-direction: column; align-items: stretch; gap: 12px; }
+  .dlg-foot.stack .btn { justify-content: center; }
+
+  #modal-root { display: contents; }
+  .toasts { position: fixed; right: 22px; bottom: 22px; display: grid; gap: 10px; z-index: 200; }
+  .toast { display: flex; align-items: flex-start; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; font-size: 14.5px; line-height: 1.5; box-shadow: var(--shadow); max-width: 380px; animation: slide .2s ease-out; }
+  .toast.bad { border-color: var(--danger-line); background: var(--surface-2); }
+  .toast-x { margin-left: auto; color: var(--muted); font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 6px; flex: none; }
+  .toast-x:hover { color: var(--text); background: var(--surface-2); }
+  @keyframes slide { from { transform: translateX(14px); opacity: 0 } }
+
+  @media (max-width: 1100px) {
+    .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .side { display: none; }
+  }
+</style>
+
+<div class="app" data-mode="light" id="app">
+  <aside class="side">
+    <div class="brand"><span>veeda</span><i></i></div>
+    <div class="company">
+      <b>Test 07 Sep</b>
+      <svg class="ico ico-s" viewBox="0 0 24 24" style="color: var(--muted)"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <div class="ideas">
+        <svg class="ico" viewBox="0 0 24 24" style="color: var(--warn)"><path d="M9 18h6"></path><path d="M10 21h4"></path><path d="M12 3a6 6 0 0 0-3.5 10.9c.4.3.5.8.5 1.1h6c0-.3.1-.8.5-1.1A6 6 0 0 0 12 3z"></path></svg>
+        <span>Buzón de Ideas</span><i class="dot"></i>
+      </div>
+      <div class="who">
+        <span class="avatar">NV</span>
+        <span style="font-size: 13px; color: var(--text-2)">neil@veeda.io</span>
+      </div>
+      <div class="ver">
+        <span>v2.0.0</span>
+        <button id="reset">Reiniciar demo</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar" id="topbar">
+    <div class="page-head">
+      <div>
+        <h1><span id="page-title">Colaboradores</span></h1>
+        <p class="lead" id="page-lead">Aquí das de alta, invitas por WhatsApp y das de baja a tu personal.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="btn-edit" title="Más opciones">
+          <svg class="ico ico-s" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
+          <span class="tlbl">Más opciones</span>
+        </button>
+        <button class="btn btn-primary" id="btn-add" title="Agregar colaboradores">
+          <svg class="ico ico-s" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"></path><line x1="18" y1="7" x2="18" y2="13"></line><line x1="15" y1="10" x2="21" y2="10"></line></svg>
+          <span class="tlbl">Agregar colaboradores</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="listhead">
+      <div class="rowline" id="searchrow">
+        <div class="searchwrap">
+          <svg class="ico ico-s" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><line x1="16" y1="16" x2="21" y2="21"></line></svg>
+          <input class="field" id="f-q" placeholder="Busca por nombre, correo o teléfono">
+        </div>
+        <div style="flex-grow: 1"></div>
+        <button class="btn btn-ghost" id="btn-filters" title="Filtros" aria-expanded="false" aria-controls="filterpanel">
+          <svg class="ico ico-s" viewBox="0 0 24 24"><polygon points="21 4 3 4 10 12.5 10 19 14 21 14 12.5 21 4"></polygon></svg>
+          <span class="tlbl">Filtros</span> <span class="count" id="f-count" hidden>0</span>
+        </button>
+        <div class="colmenu">
+          <button class="btn btn-ghost" id="btn-cols" title="Ver más datos de cada persona">
+            <svg class="ico ico-s" viewBox="0 0 24 24"><line x1="4" y1="8" x2="14" y2="8"></line><line x1="4" y1="16" x2="12" y2="16"></line><circle cx="17" cy="8" r="2"></circle><circle cx="15" cy="16" r="2"></circle></svg>
+            <span class="tlbl">Más datos</span>
+          </button>
+          <div class="colmenu-pop" id="colpop" hidden></div>
+        </div>
+        <button class="linkbtn" id="btn-export" title="Descargar la lista en Excel">
+          <svg class="ico ico-s" viewBox="0 0 24 24"><path d="M12 4v11"></path><polyline points="8 11 12 15 16 11"></polyline><path d="M4 19h16"></path></svg>
+          <span class="tlbl">Descargar en Excel</span>
+        </button>
+      </div>
+
+      <div class="selbar" id="selbar" hidden>
+        <b id="sel-count">0 seleccionados</b>
+        <button class="btn btn-ghost" id="btn-onboarding">
+          <svg class="ico ico-s" viewBox="0 0 24 24"><path d="M21 3L10.5 13.5"></path><path d="M21 3l-6.5 18-4-8-8-4L21 3z"></path></svg>
+          Invitar por WhatsApp
+        </button>
+        <button class="btn btn-danger" id="btn-baja">
+          <svg class="ico ico-s" viewBox="0 0 24 24"><polyline points="4 7 20 7"></polyline><path d="M9 7V5h6v2"></path><path d="M6 7l1 13h10l1-13"></path></svg>
+          Dar de baja
+        </button>
+        <button class="btn btn-ghost" id="btn-reactivar" hidden>
+          <svg class="ico ico-s" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"></path><polyline points="20 4 20 9 15 9"></polyline></svg>
+          Reactivar
+        </button>
+        <div style="flex-grow: 1"></div>
+        <button class="btn btn-ghost" id="btn-unsel">Quitar selección</button>
+      </div>
+
+      <span class="resline" id="count-res">0 resultados</span>
+    </div>
+    </div>
+
+    <section class="filterpanel" id="filterpanel" aria-label="Filtros" hidden>
+      <div class="filters">
+        <select class="field" id="f-onb"><option value="">Estado: todos</option><option value="ok">Ya usa Veeda</option><option value="acepto">Aceptó, falta que entre</option><option value="Enviado">Invitada, sin respuesta</option><option value="fallido">No le llegó</option><option value="Pendiente">Falta invitar</option></select>
+        <select class="field" id="f-srv"><option value="">Uso de servicios: todos</option><option value="si">Ya usó algún servicio</option><option value="no">Nunca ha usado</option></select>
+        <select class="field" id="f-tipo"><option value="">Tipo: todos</option><option value="Colaborador">Colaborador</option><option value="Administrador">Administrador</option></select>
+        <select class="field" id="f-suc"><option value="">Sucursal: todas</option></select>
+        <select class="field" id="f-ciu"><option value="">Ciudad: todas</option></select>
+      </div>
+      <div class="rowline">
+        <div><label class="field-lbl" for="f-desde">Alta desde</label><input type="date" class="field mono" id="f-desde" style="width: 175px"></div>
+        <div><label class="field-lbl" for="f-hasta">Alta hasta</label><input type="date" class="field mono" id="f-hasta" style="width: 175px"></div>
+        <div style="flex-grow: 1"></div>
+        <button class="btn btn-ghost" id="btn-clear" disabled>Quitar filtros</button>
+      </div>
+    </section>
+
+    <div class="tablewrap">
+      <div class="scroll" id="tablescroll">
+        <table id="table">
+          <thead><tr id="thead-row"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" hidden>
+        <span>Aquí no aparece nadie.</span>
+        <small style="color: var(--faint)">Borra lo que escribiste en el buscador o quita los filtros para volver a ver la lista.</small>
+      </div>
+    </div>
+
+    <div class="pager">
+      <span id="pageinfo">Página 1 de 1</span>
+      <label class="perpage">
+        <span>Ver</span>
+        <select class="field" id="perpage" aria-label="Colaboradores por página">
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+        <span>por página</span>
+      </label>
+      <div style="flex-grow: 1"></div>
+      <button class="btn btn-ghost" id="prev">Anterior</button>
+      <button class="btn btn-ghost" id="next">Siguiente</button>
+    </div>
+  </main>
+
+  <div class="toasts" id="toasts"></div>
+  <div id="modal-root"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (s, r) => (r || document).querySelector(s);
+  const el = (t, a, h) => { const n = document.createElement(t); if (a) for (const k in a) { if (k === "class") n.className = a[k]; else if (k === "html") n.innerHTML = a[k]; else n.setAttribute(k, a[k]); } if (h != null) n.textContent = h; return n; };
+  const app = $("#app");
+
+  const SUCURSALES = ["Monterrey Centro", "San Pedro", "Apodaca", "Guadalupe"];
+  const ciudadDe = u => u.ciudad || CIUDADES[u.sucursal] || "";
+  const CIUDADES = { "Monterrey Centro": "Monterrey", "San Pedro": "San Pedro Garza García", "Apodaca": "Apodaca", "Guadalupe": "Guadalupe" };
+  const AREAS = ["Operaciones", "Ventas", "Tecnología", "Recursos Humanos"];
+
+  const DAY = 864e5;
+  const daysAgo = n => new Date(Date.now() - n * DAY).toISOString();
+
+  // Delivery record of the welcome message: what the system already knows and never showed.
+  const sent = (dias, canal, acuse, motivo) => ({ fecha: daysAgo(dias), canal: canal, acuse: acuse, motivo: motivo || "" });
+
+  // …, citasFuturas, envio
+  const SEED = [
+    ["Mariana", "Treviño", "Salas", "female", "mariana.trevino@empresa.com", "8112045511", "1994-03-11", "EMP-014", "Monterrey Centro", "Recursos Humanos", "—", "Administrador", "2026-04-02", "2026-09-07", "Completado", true, 0, sent(28, "whatsapp", "leido")],
+    ["Ricardo", "Cavazos", "Núñez", "male", "ricardo.cavazos@empresa.com", "8119887402", "1989-11-27", "EMP-021", "San Pedro", "Operaciones", "Mariana Treviño", "Colaborador", "2026-05-18", "2026-09-05", "Completado", true, 2, sent(21, "whatsapp", "leido")],
+    ["Ana Sofía", "Garza", "Villarreal", "female", "ana.garza@empresa.com", "8123310976", "1997-06-02", "EMP-033", "Monterrey Centro", "Ventas", "Mariana Treviño", "Colaborador", "2026-06-01", "2026-09-06", "Enviado", false, 1, sent(9, "whatsapp", "entregado")],
+    ["Emilio", "Rodríguez", "Murillo", "male", "emilio.rodriguez@empresa.com", "", "1992-01-19", "EMP-040", "Apodaca", "Tecnología", "Ricardo Cavazos", "Colaborador", "2026-07-14", "", "Pendiente", false, 0, null],
+    ["Paulina", "Elizondo", "Reyes", "female", "paulina.elizondo@empresa.com", "8190114488", "1999-09-30", "", "Guadalupe", "Operaciones", "Ricardo Cavazos", "Colaborador", "2026-08-03", "", "Enviado", true, 0, sent(6, "whatsapp", "fallido", "WhatsApp rechazó el número")],
+    ["Javier", "Montemayor", "Lozano", "male", "javier.montemayor@empresa.com", "8177650124", "1986-12-08", "EMP-051", "San Pedro", "Ventas", "Mariana Treviño", "Colaborador", "2026-08-25", "", "Pendiente", false, 3, null]
+  ];
+
+  /* ---------- sample population ----------
+     The six rows above are the hand-made cases the flows demo (no phone, failed
+     delivery, future appointments). The rest are generated so the screen can be
+     judged with a realistic list instead of six names. */
+  const TOTAL = 200;
+  const NOMBRES_F = ["María", "Ana Sofía", "Regina", "Fernanda", "Valeria", "Daniela", "Ximena", "Andrea", "Paola", "Alejandra", "Mariana", "Carolina", "Gabriela", "Renata", "Isabel", "Lucía", "Camila", "Jimena", "Adriana", "Claudia", "Patricia", "Diana", "Verónica", "Mónica", "Rocío"];
+  const NOMBRES_M = ["José Luis", "Juan Carlos", "Miguel Ángel", "Diego", "Santiago", "Rodrigo", "Alejandro", "Fernando", "Eduardo", "Roberto", "Sergio", "Gerardo", "Óscar", "Raúl", "Héctor", "Arturo", "Iván", "Emiliano", "Mauricio", "Ernesto", "Guillermo", "Salvador", "Ramiro", "Joaquín", "Andrés"];
+  const APELLIDOS = ["García", "Hernández", "Martínez", "López", "González", "Rodríguez", "Pérez", "Sánchez", "Ramírez", "Flores", "Torres", "Vázquez", "Reyes", "Cruz", "Morales", "Ortiz", "Gutiérrez", "Chávez", "Ramos", "Ruiz", "Mendoza", "Aguilar", "Domínguez", "Guerrero", "Salazar", "Treviño", "Cavazos", "Elizondo", "Villarreal", "Garza", "Montemayor", "Lozano", "Leal", "Cantú", "De la Fuente", "Zambrano", "Peña", "Ibarra", "Sepúlveda", "Guajardo"];
+
+  // Small deterministic PRNG: the demo list is identical on every reload,
+  // so a screenshot taken today still matches the one taken tomorrow.
+  function mulberry(a) {
+    return function () {
+      a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  const isoDay = ms => new Date(ms).toISOString().slice(0, 10);
+
+  function generarUsuarios(n) {
+    const rnd = mulberry(20260907);
+    const one = arr => arr[Math.floor(rnd() * arr.length)];
+    const int = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+    const correos = new Set(SEED.map(r => r[4]));
+    const out = [];
+
+    for (let i = 0; i < n; i++) {
+      const sex = rnd() < 0.52 ? "female" : "male";
+      const first = one(sex === "female" ? NOMBRES_F : NOMBRES_M);
+      const last = one(APELLIDOS);
+      const last2 = one(APELLIDOS);
+
+      const base = (first.split(" ")[0] + "." + last)
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z.]/g, "");
+      let email = base + "@empresa.com", k = 1;
+      while (correos.has(email)) { email = base + (++k) + "@empresa.com"; }
+      correos.add(email);
+
+      const alta = isoDay(Date.now() - int(20, 540) * DAY);
+      const roll = rnd();
+      let onboarding, acceso, envio;
+      if (roll < 0.62) {                       // llegó y entró
+        onboarding = "Completado";
+        acceso = isoDay(Date.parse(alta) + int(1, 20) * DAY);
+        envio = sent(int(25, 400), "whatsapp", "leido");
+      } else if (roll < 0.72) {                // llegó pero no ha entrado
+        onboarding = "Completado"; acceso = "";
+        envio = sent(int(3, 60), "whatsapp", "entregado");
+      } else if (roll < 0.86) {                // invitado, sin respuesta
+        onboarding = "Enviado"; acceso = "";
+        envio = sent(int(1, 30), "whatsapp", rnd() < 0.5 ? "entregado" : "enviado");
+      } else if (roll < 0.90) {                // el envío se cayó
+        onboarding = "Enviado"; acceso = "";
+        envio = sent(int(2, 40), "whatsapp", "fallido", one(["WhatsApp rechazó el número", "El número no tiene WhatsApp", "Número incompleto"]));
+      } else {                                 // nadie lo ha invitado
+        onboarding = "Pendiente"; acceso = ""; envio = null;
+      }
+
+      const citas = rnd() < 0.8 ? 0 : (rnd() < 0.75 ? 1 : int(2, 3));
+      const baja = rnd() < 0.08;
+      const sucursal = one(SUCURSALES);
+
+      out.push({
+        id: ++uid, first: first, last: last, last2: last2, sex: sex, email: email,
+        lada: "+52", phone: "81" + String(int(10000000, 99999999)),
+        dob: isoDay(Date.parse("1972-01-01") + int(0, 10000) * DAY),
+        empno: rnd() < 0.85 ? "EMP-" + String(100 + i) : "",
+        sucursal: sucursal, area: one(AREAS), reporta: "—",
+        tipo: rnd() < 0.05 ? "Administrador" : "Colaborador",
+        alta: alta, acceso: acceso, onboarding: onboarding,
+        servicio: rnd() < 0.45, baja: baja,
+        citasFuturas: citas, envio: envio,
+        bajaFecha: baja ? isoDay(Date.parse(alta) + int(30, 300) * DAY) : "",
+        bajaPor: baja ? one(["mariana.trevino@empresa.com", "rh@empresa.com", "neil@veeda.io"]) : "",
+        bajaProgramada: ""
+      });
+    }
+    return out;
+  }
+
+  let uid = 0;
+  function seedUsers() {
+    const base = SEED.map(r => ({
+      id: ++uid, first: r[0], last: r[1], last2: r[2], sex: r[3], email: r[4], lada: "+52", phone: r[5],
+      dob: r[6], empno: r[7], sucursal: r[8], area: r[9], reporta: r[10], tipo: r[11],
+      alta: r[12], acceso: r[13], onboarding: r[14], servicio: r[15], baja: false,
+      citasFuturas: r[16], envio: r[17],
+      bajaFecha: "", bajaPor: "", bajaProgramada: ""
+    }));
+    return base.concat(generarUsuarios(TOTAL - base.length));
+  }
+
+  const state = {
+    users: seedUsers(),
+    tab: "activos",
+    page: 1,
+    size: 25,
+    sort: { key: "alta", dir: "desc" },
+    sel: new Set(),
+    cols: { estado: true, email: true, empno: true, alta: true, phone: false, tipo: false, acceso: false },
+    movs: []
+  };
+
+  /* ---------- movement log ----------
+     Shared, append-only record every part of the screen writes to: alta, baja,
+     reactivacion, cambio, onboarding. The detail panel reads it back. */
+  const ME = "neil@veeda.io";
+  let movId = 0;
+  function logMov(userId, tipo, detalle, fecha) {
+    state.movs.push({
+      id: ++movId, userId: userId, fecha: fecha || new Date().toISOString(),
+      tipo: tipo, detalle: detalle, autor: ME
+    });
+  }
+  function seedMovs() {
+    state.movs = []; movId = 0;
+    state.users.forEach(u => logMov(u.id, "alta", "Alta inicial", u.alta + "T09:00:00"));
+  }
+
+  // Only Nombre and Fecha de alta are sortable; the rest are plain labels
+  const COLS = [
+    { key: "estado", label: "Estado" },
+    { key: "nombre", label: "Nombre", always: true, sortable: true },
+    { key: "email", label: "Email" },
+    { key: "empno", label: "No. de empleado" },
+    { key: "alta", label: "Fecha de alta", sortable: true },
+    { key: "phone", label: "Teléfono" },
+    { key: "tipo", label: "Tipo" },
+    { key: "acceso", label: "Fecha de acceso" }
+  ];
+
+  const NAV = [
+    ["Panel de Control", '<rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect>'],
+    ["Colaboradores", '<circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"></path><path d="M16 11.5a3 3 0 0 0 0-6"></path><path d="M17.5 19c0-2.2-.9-3.9-2.2-4.6"></path>'],
+    ["Áreas", '<rect x="3" y="8" width="18" height="12" rx="1.5"></rect><path d="M8 8V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V8"></path>'],
+    ["Organigrama", '<rect x="9" y="3" width="6" height="5" rx="1"></rect><rect x="3" y="16" width="6" height="5" rx="1"></rect><rect x="15" y="16" width="6" height="5" rx="1"></rect><path d="M12 8v4M6 16v-2h12v2"></path>'],
+    ["Rotación laboral", '<polyline points="3 16 9 10 13 14 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline>'],
+    ["Calendario", '<rect x="3" y="5" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="8" y1="3" x2="8" y2="7"></line><line x1="16" y1="3" x2="16" y2="7"></line>'],
+    ["Reloj checador", '<circle cx="12" cy="12" r="8.5"></circle><polyline points="12 7 12 12 15.5 14"></polyline>', "Nuevo"],
+    ["NOM 035", '<rect x="5" y="3" width="14" height="18" rx="2"></rect><line x1="9" y1="8" x2="15" y2="8"></line><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="13" y2="16"></line>'],
+    ["Encuestas y Notificaciones", '<circle cx="12" cy="12" r="8.5"></circle><polyline points="12 6.5 12 12 16 12"></polyline>'],
+    ["Asistencia", '<rect x="5" y="3" width="14" height="18" rx="2"></rect><polyline points="9 12 11 14 15 9"></polyline>'],
+    ["Adelanto de nómina", '<rect x="3" y="5" width="18" height="14" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line>', "Nuevo"]
+  ];
+
+  /* ---------- toasts ---------- */
+  function clearBadToasts() {
+    document.querySelectorAll("#toasts .toast.bad").forEach(t => t.remove());
+  }
+
+  function toast(msg, bad) {
+    const t = el("div", { class: "toast" + (bad ? " bad" : "") });
+    t.appendChild(el("span", null, msg));
+    if (bad) {
+      // An error that vanishes in three seconds never happened
+      const x = el("button", { class: "toast-x", "aria-label": "Cerrar aviso" }, "✕");
+      x.onclick = () => t.remove();
+      t.appendChild(x);
+    }
+    $("#toasts").appendChild(t);
+    if (!bad) setTimeout(() => { t.style.transition = "opacity .3s"; t.style.opacity = "0"; setTimeout(() => t.remove(), 320); }, 8000);
+  }
+
+  /* ---------- helpers ---------- */
+  const fullName = u => [u.first, u.last, u.last2].filter(Boolean).join(" ");
+  const fmtDate = s => { if (!s) return "—"; const [y, m, d] = s.split("-"); return d + "/" + m + "/" + y; };
+  // Excel hands numeric cells back as numbers, so coerce before stripping
+  const digits = s => String(s == null ? "" : s).replace(/\D/g, "");
+  const todayISO = () => new Date().toISOString().slice(0, 10);
+
+  function normSex(v) {
+    const s = String(v || "").trim().toLowerCase();
+    if (["male", "m", "masculino", "hombre", "h"].includes(s)) return "male";
+    if (["female", "f", "femenino", "mujer"].includes(s)) return "female";
+    return "";
+  }
+  function parseDOB(v) {
+    if (v instanceof Date && !isNaN(v)) return v.toISOString().slice(0, 10);
+    const s = String(v || "").trim();
+    let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (m) { let y = +m[3]; if (y < 100) y += y > 30 ? 1900 : 2000; return [y, m[2].padStart(2, "0"), m[1].padStart(2, "0")].join("-"); }
+    m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return m[0];
+    return "";
+  }
+  const validEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(s || "").trim());
+
+  function fmtWhen(iso) {
+    const ms = Date.now() - Date.parse(iso);
+    if (!isFinite(ms)) return "";
+    const min = Math.round(ms / 6e4);
+    if (min < 1) return "hace un momento";
+    if (min < 60) return "hace " + min + (min === 1 ? " minuto" : " minutos");
+    const h = Math.round(min / 60);
+    if (h < 24) return "hace " + h + (h === 1 ? " hora" : " horas");
+    const d = Math.round(h / 24);
+    return "hace " + d + (d === 1 ? " día" : " días");
+  }
+
+  const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const plural = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
+
+  /* ---------- confirmation dialog ----------
+     Every destructive or outbound action passes through here, so it can say who
+     it touches and what it does NOT do before anything happens. */
+  function openConfirm(o) {
+    closeConfirm();
+    const veil = el("div", { id: "dlg-veil" });
+    // `alt` is the softer of the two ways forward, so it sits before the
+    // dangerous one and never looks like the plain "go back" button.
+    const no = '<button class="btn btn-ghost" id="dlg-no">' + esc(o.cancel || "No, regresar") + '</button>';
+    const yesBtn = '<button class="btn ' + (o.danger ? "btn-danger" : "btn-primary") + '" id="dlg-yes">' + esc(o.confirm) + '</button>';
+    const foot = o.onConfirm
+      ? (o.alt
+        ? '<button class="btn btn-soft" id="dlg-alt">' + esc(o.alt.label) + '</button>' + yesBtn + no
+        : no + yesBtn)
+      : '<button class="btn btn-primary" id="dlg-no">Entendido</button>';
+    veil.innerHTML = '<div class="dialog" role="dialog" aria-modal="true" aria-label="' + esc(o.title) + '">' +
+      '<h2>' + esc(o.title) + '</h2>' +
+      '<div class="dlg-body">' +
+        (o.lead ? '<p class="dlg-lead">' + o.lead + '</p>' : '') +
+        (o.body || '') +
+      '</div>' +
+      '<div class="dlg-foot' + (o.alt ? ' stack' : '') + '">' + foot + '</div></div>';
+    $("#modal-root").appendChild(veil);
+    veil.addEventListener("mousedown", e => { if (e.target === veil) closeConfirm(); });
+    $("#dlg-no").onclick = closeConfirm;
+    const yes = $("#dlg-yes");
+    if (yes) yes.onclick = () => { closeConfirm(); o.onConfirm(); };
+    const other = $("#dlg-alt");
+    if (other) other.onclick = () => { closeConfirm(); o.alt.onClick(); };
+    document.addEventListener("keydown", dlgEsc);
+    ($("#dlg-alt") || yes || $("#dlg-no")).focus();
+  }
+  function dlgEsc(e) { if (e.key === "Escape") closeConfirm(); }
+  function closeConfirm() {
+    const v = $("#dlg-veil");
+    if (v) v.remove();
+    document.removeEventListener("keydown", dlgEsc);
+  }
+
+  // Renders up to six names; the rest collapse into a tail line.
+  function nameList(users, note) {
+    const shown = users.slice(0, 6);
+    let html = '<div class="dlg-names">';
+    shown.forEach(u => {
+      const extra = note ? note(u) : "";
+      html += '<div>' + esc(fullName(u)) + (extra ? '<em>' + esc(extra) + '</em>' : '') + '</div>';
+    });
+    if (users.length > shown.length) html += '<div style="color:var(--muted)">y ' + (users.length - shown.length) + ' más</div>';
+    return html + '</div>';
+  }
+
+  function estado(u) {
+    if (u.onboarding === "Pendiente") return { label: "Falta invitar", cls: "off" };
+    // The failed delivery was always in the data; showing it is what stops the re-sends
+    if (u.envio && u.envio.acuse === "fallido") return { label: "No le llegó", cls: "bad" };
+    if (u.onboarding === "Enviado") return { label: "Invitada, sin respuesta", cls: "pend" };
+    return u.acceso ? { label: "Ya usa Veeda", cls: "ok" } : { label: "Aceptó, falta que entre", cls: "pend" };
+  }
+
+  /* ---------- sidebar ---------- */
+  // A panel open over the list leaves through the same exit as its own Cancelar,
+  // so the unsaved-changes guard still gets its say. Returns false if it stayed.
+  function leavePanels() {
+    hubReturn = false;
+    if ($("#add-page")) { tryCloseAdd(); return !$("#add-page"); }
+    if ($(".editor")) { tryCloseEditor(); return !$(".editor"); }
+    if ($(".hub")) { closeEditHub(); return true; }
+    return true;
+  }
+
+  let navUsers = null, navBaja = null;
+  NAV.forEach(([label, path, tag], i) => {
+    const b = el("button", { html: '<svg class="ico" viewBox="0 0 24 24">' + path + '</svg><span class="lbl">' + label + '</span>' + (tag ? '<span class="tag-new">' + tag + '</span>' : '') });
+    b.onclick = () => {
+      if (!leavePanels()) return;
+      if (i === 1) { setTab("activos"); return; }
+      toast("Esta parte todavía no está lista en la muestra. Por ahora solo funciona Colaboradores.");
+    };
+    $("#nav").appendChild(b);
+    if (i === 1) {
+      navUsers = b;
+      navBaja = el("button", { class: "sub", html: '<span class="lbl">Dados de baja</span><span class="tag-count" id="c-baja" hidden>0</span>' });
+      navBaja.onclick = () => { if (leavePanels()) setTab("baja"); };
+      $("#nav").appendChild(navBaja);
+    }
+  });
+
+  function setTab(tab) {
+    state.tab = tab;
+    state.page = 1;
+    state.sel.clear();
+    if (tab === "baja") { navUsers.removeAttribute("aria-current"); navBaja.setAttribute("aria-current", "page"); }
+    else { navBaja.removeAttribute("aria-current"); navUsers.setAttribute("aria-current", "page"); }
+    $("#page-title").textContent = tab === "baja" ? "Dados de baja" : "Colaboradores";
+    render();
+  }
+  navUsers.setAttribute("aria-current", "page");
+
+  /* ---------- sticky header ----------
+     Collapses as soon as the page moves, so the search and the actions stay
+     within reach on a list eight pages long. */
+  const topbar = $("#topbar");
+  const tableScroll = $("#tablescroll");
+  let stuck = false;
+  function paintStuck() {
+    // Only collapse when the table has real room to scroll: on a short list the
+    // extra height would push the scrollbar back to the top and flip-flop.
+    const room = tableScroll.scrollHeight - tableScroll.clientHeight;
+    const now = room > 160 && tableScroll.scrollTop > 40;
+    if (now === stuck) return;
+    stuck = now;
+    topbar.setAttribute("data-stuck", String(now));
+  }
+  tableScroll.addEventListener("scroll", paintStuck, { passive: true });
+  paintStuck();
+
+  /* ---------- filter options ---------- */
+  SUCURSALES.forEach(s => $("#f-suc").appendChild(el("option", { value: s }, s)));
+  [...new Set(Object.values(CIUDADES))].forEach(c => $("#f-ciu").appendChild(el("option", { value: c }, c)));
+
+  /* ---------- columns menu ---------- */
+  COLS.filter(c => !c.always).forEach(c => {
+    const lab = el("label");
+    const cb = el("input", { type: "checkbox" });
+    cb.checked = state.cols[c.key];
+    cb.onchange = () => { state.cols[c.key] = cb.checked; render(); };
+    lab.appendChild(cb); lab.appendChild(el("span", null, c.label));
+    $("#colpop").appendChild(lab);
+  });
+  $("#btn-cols").onclick = e => { e.stopPropagation(); $("#colpop").hidden = !$("#colpop").hidden; };
+  document.addEventListener("click", e => { if (!e.target.closest(".colmenu")) $("#colpop").hidden = true; });
+
+  /* ---------- filters panel ---------- */
+  const FILTER_IDS = ["f-onb", "f-srv", "f-tipo", "f-suc", "f-ciu", "f-desde", "f-hasta"];
+  function paintFilterCount() {
+    const n = FILTER_IDS.filter(id => $("#" + id).value).length;
+    $("#f-count").hidden = n === 0;
+    $("#f-count").textContent = n;
+    $("#btn-clear").disabled = n === 0;
+  }
+  $("#btn-filters").onclick = () => {
+    const p = $("#filterpanel");
+    p.hidden = !p.hidden;
+    $("#btn-filters").setAttribute("aria-expanded", String(!p.hidden));
+  };
+  $("#btn-clear").onclick = () => { FILTER_IDS.forEach(id => $("#" + id).value = ""); state.page = 1; render(); };
+
+  /* ---------- filtering ---------- */
+  function visible() {
+    const q = $("#f-q").value.trim().toLowerCase();
+    const onb = $("#f-onb").value, srv = $("#f-srv").value;
+    const tipo = $("#f-tipo").value, suc = $("#f-suc").value, ciu = $("#f-ciu").value;
+    const desde = $("#f-desde").value, hasta = $("#f-hasta").value;
+
+    let rows = state.users.filter(u => u.baja === (state.tab === "baja"));
+    rows = rows.filter(u => {
+      if (q) {
+        // Text match first; if the query looks like a phone, compare digits only so
+        // "81 1204 5511", "+52 8112045511" and "8112045511" find the same person.
+        const hay = (fullName(u) + " " + u.email + " " + u.empno).toLowerCase();
+        const qd = digits(q);
+        const byPhone = qd.length >= 3 && digits(u.lada + u.phone).indexOf(qd) >= 0;
+        if (!hay.includes(q) && !byPhone) return false;
+      }
+      if (onb) {
+        // Filter by what the chip says, so the list matches what she reads
+        const e = estado(u);
+        const ok = onb === "ok" ? e.label === "Ya usa Veeda"
+          : onb === "acepto" ? e.label === "Aceptó, falta que entre"
+          : onb === "fallido" ? e.cls === "bad"
+          : onb === "Enviado" ? e.label === "Invitada, sin respuesta"
+          : u.onboarding === onb;
+        if (!ok) return false;
+      }
+      if (srv && (srv === "si") !== !!u.servicio) return false;
+      if (tipo && u.tipo !== tipo) return false;
+      if (suc && u.sucursal !== suc) return false;
+      if (ciu && ciudadDe(u) !== ciu) return false;
+      if (desde && u.alta < desde) return false;
+      if (hasta && u.alta > hasta) return false;
+      return true;
+    });
+
+    const { key, dir } = state.sort;
+    const val = u => key === "nombre" ? fullName(u).toLowerCase() : String(u[key] || "").toLowerCase();
+    rows.sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * (dir === "asc" ? 1 : -1); });
+    return rows;
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    const bajas = state.users.filter(u => u.baja).length;
+    $("#c-baja").textContent = bajas;
+    $("#c-baja").hidden = bajas === 0;
+
+    const rows = visible();
+    const pages = Math.max(1, Math.ceil(rows.length / state.size));
+    if (state.page > pages) state.page = pages;
+    const slice = rows.slice((state.page - 1) * state.size, state.page * state.size);
+
+    paintFilterCount();
+    $("#pageinfo").textContent = "Página " + state.page + " de " + pages;
+    $("#prev").disabled = state.page <= 1;
+    $("#next").disabled = state.page >= pages;
+
+    // header
+    const hr = $("#thead-row");
+    hr.innerHTML = "";
+    const thSel = el("th", { class: "sel" });
+    const all = el("input", { type: "checkbox" });
+    all.checked = slice.length > 0 && slice.every(u => state.sel.has(u.id));
+    all.onchange = () => { slice.forEach(u => all.checked ? state.sel.add(u.id) : state.sel.delete(u.id)); render(); };
+    thSel.appendChild(all);
+    hr.appendChild(thSel);
+
+    COLS.forEach(c => {
+      if (!c.always && !state.cols[c.key]) return;
+      if (!c.sortable) { hr.appendChild(el("th", { class: "plain" }, c.label)); return; }
+      const th = el("th");
+      if (state.sort.key === c.key) th.setAttribute("aria-sort", state.sort.dir === "asc" ? "ascending" : "descending");
+      const b = el("button", { html: '<span>' + c.label + '</span><span class="arrow">' + (state.sort.key === c.key ? (state.sort.dir === "asc" ? "↑" : "↓") : "⇅") + '</span>' });
+      b.onclick = () => {
+        if (state.sort.key === c.key) state.sort.dir = state.sort.dir === "asc" ? "desc" : "asc";
+        else state.sort = { key: c.key, dir: "asc" };
+        render();
+      };
+      th.appendChild(b);
+      hr.appendChild(th);
+    });
+
+    // body
+    const tb = $("#tbody");
+    tb.innerHTML = "";
+    slice.forEach(u => {
+      const tr = el("tr");
+      if (state.sel.has(u.id)) tr.setAttribute("data-selected", "true");
+      const td0 = el("td", { class: "sel" });
+      const cb = el("input", { type: "checkbox" });
+      cb.checked = state.sel.has(u.id);
+      cb.onchange = () => { cb.checked ? state.sel.add(u.id) : state.sel.delete(u.id); render(); };
+      td0.appendChild(cb); tr.appendChild(td0);
+
+      const cell = (key) => {
+        const td = el("td");
+        if (key === "nombre") {
+          td.innerHTML = '<span class="name">' + fullName(u) + '</span>';
+        } else if (key === "estado") {
+          const e = estado(u);
+          td.innerHTML = '<span class="chip ' + e.cls + '"><i class="dot"></i>' + e.label + '</span>';
+        } else if (key === "phone") {
+          td.innerHTML = '<span class="mono">' + u.lada + " " + u.phone + '</span>';
+        } else if (key === "alta" || key === "acceso") {
+          td.innerHTML = '<span class="mono">' + fmtDate(u[key]) + '</span>';
+        } else if (key === "empno") {
+          td.innerHTML = u.empno ? '<span class="mono">' + u.empno + '</span>' : '<span style="color: var(--faint)">—</span>';
+        } else {
+          td.textContent = u[key] || "—";
+        }
+        return td;
+      };
+      COLS.forEach(c => { if (c.always || state.cols[c.key]) tr.appendChild(cell(c.key)); });
+      tb.appendChild(tr);
+    });
+
+    $("#empty").hidden = slice.length > 0;
+    $("#table").style.display = slice.length ? "" : "none";
+
+    // Bulk actions live in a bar that only shows up with rows selected, and the
+    // bar offers what makes sense for the tab you are standing on.
+    const onBaja = state.tab === "baja";
+    const selUsers = state.users.filter(u => state.sel.has(u.id) && u.baja === onBaja);
+    const selCount = selUsers.length;
+    $("#selbar").hidden = selCount === 0;
+    $("#searchrow").hidden = selCount > 0;
+    $("#sel-count").textContent = selCount + (selCount === 1 ? " seleccionado" : " seleccionados");
+
+    $("#btn-baja").hidden = onBaja;
+    $("#btn-onboarding").hidden = onBaja;
+    $("#btn-reactivar").hidden = !onBaja;
+
+    if (onBaja) {
+      $("#btn-reactivar").lastChild.textContent = " Volver a activar (" + selCount + ")";
+    } else {
+      $("#btn-baja").lastChild.textContent = " Dar de baja (" + selCount + ")";
+      // Stays enabled even when nobody qualifies: the dialog is where RH learns why.
+      $("#btn-onboarding").disabled = selCount === 0;
+      const plan = planOnboarding(selUsers);
+      $("#btn-onboarding").lastChild.textContent = plan.send.length
+        ? " Invitar por WhatsApp (" + plan.send.length + ")"
+        : " Invitar por WhatsApp";
+    }
+
+    // While nothing is picked, this line is also the instructions
+    $("#count-res").textContent = plural(rows.length, "colaborador", "colaboradores") +
+      (selCount ? "" : " · Marca la casilla de una persona para invitarla o darla de baja");
+  }
+
+  /* ---------- wiring ---------- */
+  ["f-q", "f-onb", "f-srv", "f-tipo", "f-suc", "f-ciu", "f-desde", "f-hasta"].forEach(id => {
+    $("#" + id).addEventListener("input", () => { state.page = 1; render(); });
+  });
+  $("#prev").onclick = () => { state.page--; render(); };
+  $("#next").onclick = () => { state.page++; render(); };
+
+  // Changing the page size keeps you where you were instead of jumping to page 1
+  $("#perpage").value = String(state.size);
+  $("#perpage").onchange = e => {
+    const first = (state.page - 1) * state.size;
+    state.size = +e.target.value;
+    state.page = Math.floor(first / state.size) + 1;
+    render();
+  };
+  $("#btn-unsel").onclick = () => { state.sel.clear(); render(); };
+  $("#reset").onclick = () => {
+    uid = 0; state.users = seedUsers(); seedMovs();
+    state.sel.clear(); state.page = 1; render();
+    toast("Lista de ejemplo restaurada.");
+  };
+
+  /* ---------- welcome message ----------
+     Never fires blind: whoever cannot receive it is left out on purpose and the
+     dialog says who and why before a single message goes out. */
+  function planOnboarding(users) {
+    const send = [], skip = [];
+    users.forEach(u => {
+      if (u.onboarding === "Completado") { skip.push({ u: u, why: "ya usa Veeda" }); return; }
+      if (!digits(u.phone)) { skip.push({ u: u, why: "sin teléfono registrado" }); return; }
+      if (u.envio && u.envio.acuse === "fallido") { skip.push({ u: u, why: "el envío anterior falló: " + (u.envio.motivo || "revisa el número") }); return; }
+      const last = u.envio && u.envio.fecha ? Date.parse(u.envio.fecha) : 0;
+      if (last && Date.now() - last < DAY) { skip.push({ u: u, why: "se le envió " + fmtWhen(u.envio.fecha) }); return; }
+      send.push(u);
+    });
+    return { send: send, skip: skip };
+  }
+
+  $("#btn-onboarding").onclick = () => {
+    const selUsers = state.users.filter(u => state.sel.has(u.id) && !u.baja);
+    const plan = planOnboarding(selUsers);
+    const byWhy = {};
+    plan.skip.forEach(x => { (byWhy[x.why] = byWhy[x.why] || []).push(x.u); });
+
+    let body = "";
+    if (plan.send.length) body += nameList(plan.send);
+    if (plan.skip.length) {
+      body += '<div class="note warn"><b>No se le puede mandar a ' + plural(plan.skip.length, "persona", "personas") + '</b>' +
+        Object.keys(byWhy).map(why =>
+          '<div>' + esc(byWhy[why].map(fullName).join(", ")) + ' — ' + esc(why) + '.</div>'
+        ).join("") + '</div>';
+    }
+
+    if (!plan.send.length) {
+      openConfirm({
+        title: "No se le puede mandar a nadie de los que marcaste",
+        lead: "Abajo dice por qué en cada caso. Corrige eso y vuelve a intentar.",
+        body: body
+      });
+      return;
+    }
+
+    openConfirm({
+      title: "Invitar por WhatsApp a " + plural(plan.send.length, "colaborador", "colaboradores"),
+      lead: "Le va a llegar un mensaje de WhatsApp con el enlace para entrar a Veeda.",
+      body: body,
+      confirm: "Sí, invitar",
+      onConfirm: () => {
+        plan.send.forEach(u => {
+          u.onboarding = "Enviado";
+          u.envio = { fecha: new Date().toISOString(), canal: "whatsapp", acuse: "enviado", motivo: "" };
+          logMov(u.id, "onboarding", "Bienvenida enviada por WhatsApp");
+        });
+        const n = plan.send.length;
+        state.sel.clear(); render();
+        toast("Invitación enviada a " + plural(n, "colaborador", "colaboradores") + ". Puedes volver a mandarla mañana si no responde.");
+      }
+    });
+  };
+
+  /* ---------- offboarding ----------
+     The dialog names everyone, says what happens to their appointments and does
+     not claim to be irreversible, because it isn't. */
+  $("#btn-baja").onclick = () => {
+    const targets = state.users.filter(u => state.sel.has(u.id) && !u.baja);
+    if (!targets.length) return;
+
+    const conCitas = targets.filter(u => u.citasFuturas > 0);
+    const totalCitas = conCitas.reduce((n, u) => n + u.citasFuturas, 0);
+
+    let body = nameList(targets, u => u.citasFuturas ? plural(u.citasFuturas, "cita futura", "citas futuras") : "");
+    if (conCitas.length) {
+      body += '<div class="note warn"><b>' + plural(totalCitas, "cita futura sigue en pie", "citas futuras siguen en pie") + '</b>' +
+        'Dar de baja no cancela nada de la agenda: ' + esc(conCitas.map(fullName).join(", ")) +
+        (conCitas.length === 1 ? ' conserva su cita.' : ' conservan sus citas.') +
+        ' Si ya no deben asistir, cancélalas desde el calendario.</div>';
+    }
+    body += '<div class="note calm"><b>Si te equivocas, se puede deshacer</b>Quedan guardados en la lista «Dados de baja», y desde ahí los vuelves a activar cuando quieras.</div>';
+
+    openConfirm({
+      title: targets.length === 1 ? "Dar de baja a " + fullName(targets[0]) : "Dar de baja a " + plural(targets.length, "colaborador", "colaboradores"),
+      lead: "Desde hoy ya no podrán entrar a Veeda.",
+      body: body,
+      confirm: "Sí, dar de baja",
+      danger: true,
+      onConfirm: () => {
+        targets.forEach(u => {
+          u.baja = true;
+          u.bajaFecha = todayISO();
+          u.bajaPor = ME;
+          logMov(u.id, "baja", u.citasFuturas ? "Baja con " + plural(u.citasFuturas, "cita futura activa", "citas futuras activas") : "Baja");
+        });
+        const n = targets.length;
+        state.sel.clear(); render();
+        toast(plural(n, "colaborador dado de baja", "colaboradores dados de baja") + ". Si te equivocaste, están en «Dados de baja» para volver a activarlos.");
+      }
+    });
+  };
+
+  $("#btn-reactivar").onclick = () => {
+    const targets = state.users.filter(u => state.sel.has(u.id) && u.baja);
+    if (!targets.length) return;
+    openConfirm({
+      title: targets.length === 1 ? "Volver a activar a " + fullName(targets[0]) : "Volver a activar a " + plural(targets.length, "colaborador", "colaboradores"),
+      lead: "Van a poder entrar a Veeda otra vez, con los mismos datos que ya tenían.",
+      body: nameList(targets, u => u.bajaFecha ? "se dio de baja el " + fmtDate(u.bajaFecha) : ""),
+      confirm: "Sí, activar",
+      onConfirm: () => {
+        targets.forEach(u => {
+          u.baja = false; u.bajaFecha = ""; u.bajaPor = "";
+          logMov(u.id, "reactivacion", "Reactivado");
+        });
+        const n = targets.length;
+        state.sel.clear(); render();
+        toast(plural(n, "colaborador vuelve a estar activo", "colaboradores vuelven a estar activos") + ".");
+      }
+    });
+  };
+
+  /* ---------- downloads ---------- */
+  let downloads = null;
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("downloads").then(d => { downloads = d; }).catch(() => {});
+  }
+  async function saveFile(filename, data) {
+    if (downloads) {
+      try { await downloads.save({ filename: filename, data: data }); toast("Archivo listo: " + filename); return; }
+      catch (e) { toast("No se pudo guardar " + filename + ". Revisa que el navegador no esté bloqueando descargas y vuelve a intentarlo.", true); return; }
+    }
+    try {
+      const tipo = /\.xlsx$/.test(filename)
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : "text/csv;charset=utf-8";
+      const url = URL.createObjectURL(new Blob([data], { type: tipo }));
+      const a = el("a", { href: url, download: filename, style: "display:none" });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast("Archivo listo: " + filename);
+    } catch (e) {
+      toast("No se pudo guardar " + filename + ". Revisa que el navegador no esté bloqueando descargas y vuelve a intentarlo.", true);
+    }
+  }
+
+  // Every Excel this screen produces is the same file: the eleven columns of the
+  // template, with the same validations. One shape in, one shape out, so
+  // anything downloaded here can be edited and uploaded straight back.
+  $("#btn-export").onclick = () => {
+    const rows = visible();
+    if (!rows.length) { toast("No hay nada que descargar: los filtros no dejaron a nadie en la lista. Quita un filtro y vuelve a intentar.", true); return; }
+    const activos = state.users.filter(u => !u.baja);
+    saveFile("colaboradores-test-07-sep.xlsx", buildTemplateXlsx(rows.map(filaDeUsuario)));
+    if (rows.length < activos.length && state.tab !== "baja") {
+      toast("Ojo: el archivo trae " + plural(rows.length, "colaborador", "colaboradores") +
+        ", los que dejaron los filtros, no los " + activos.length + " de la lista completa.", true);
+    }
+  };
+
+  /* ---------- modal ---------- */
+  let mode = "uno";
+  let draft = [];
+  let parsed = null;
+  let sheetKind = "add"; // "add" | "edit"
+
+  function blankRow() { return { first: "", last: "", last2: "", sex: "", email: "", lada: "+52", phone: "", dob: "", empno: "", sucursal: "", bad: {} }; }
+
+  // An existing collaborator turned into an editable draft row, keyed back by id.
+  // `orig` is the snapshot the grid compares against to highlight unsaved edits.
+  const GRID_KEYS = ["first", "last", "last2", "sex", "email", "lada", "phone", "dob", "empno", "sucursal"];
+
+  function editableRow(u) {
+    const r = { id: u == null ? null : u.id, bad: {} };
+    GRID_KEYS.forEach(k => { r[k] = u == null ? (k === "lada" ? "+52" : "") : (u[k] || ""); });
+    r.orig = {};
+    GRID_KEYS.forEach(k => { r.orig[k] = r[k]; });
+    return r;
+  }
+
+  const rowIsEmpty = r => !GRID_KEYS.some(k => k !== "lada" && String(r[k] || "").trim());
+  const cellDirty = (r, k) => String(r[k] || "") !== String(r.orig ? r.orig[k] || "" : "");
+
+  function openModal(startMode) {
+    sheetKind = "add"; mode = startMode || "uno";
+    draft = [blankRow()]; parsed = null; unoSaved = [];
+    openAddPage();
+  }
+
+  /* ---------- edit hub ----------
+     "Más opciones" lands on a page of options first, the way the
+     portal's own "Cargar la lista" does, instead of dropping straight into a
+     grid. Every option here goes somewhere real. */
+  let hubReturn = false; // whether closing the page we opened returns to the hub
+
+  const HUB_ICONS = {
+    grid: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="9" y1="10" x2="9" y2="20"></line>',
+    add: '<circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"></path><line x1="18" y1="7" x2="18" y2="13"></line><line x1="15" y1="10" x2="21" y2="10"></line>',
+    file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="14 3 14 9 20 9"></polyline><line x1="12" y1="12" x2="12" y2="17"></line><polyline points="9.5 14.5 12 12 14.5 14.5"></polyline>',
+    out: '<circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"></path><line x1="15" y1="10" x2="21" y2="10"></line>',
+    down: '<path d="M12 4v11"></path><polyline points="8 11 12 15 16 11"></polyline><path d="M4 19h16"></path>'
+  };
+  const ARROW = '<svg class="ico go" viewBox="0 0 24 24"><line x1="4" y1="12" x2="19" y2="12"></line><polyline points="13 6 19 12 13 18"></polyline></svg>';
+
+  function hubOption(icon, title, desc, tag, onClick) {
+    const b = el("button", { class: "opt" });
+    b.innerHTML = '<svg class="ico" viewBox="0 0 24 24">' + HUB_ICONS[icon] + '</svg>' +
+      '<span class="txt"><b>' + esc(title) + (tag ? '<span class="opt-tag">' + esc(tag) + '</span>' : '') + '</b>' +
+      '<p>' + esc(desc) + '</p></span>' + ARROW;
+    b.onclick = onClick;
+    return b;
+  }
+
+  function openEditHub() {
+    closeEditHub();
+    const activos = state.users.filter(u => !u.baja).length;
+    const bajas = state.users.filter(u => u.baja).length;
+
+    const hub = el("div", { class: "hub", role: "region", "aria-label": "Más opciones" });
+    hub.innerHTML = '<div class="hub-in">' +
+      '<nav class="crumb"><button id="hub-back">Colaboradores</button>' +
+        '<svg class="ico ico-s" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"></polyline></svg>' +
+        '<span>Más opciones</span></nav>' +
+      '<h1>Más opciones</h1>' +
+      '<h2>Cambiar la lista</h2><div id="hub-a"></div>' +
+      '<h2>Consultar</h2><div id="hub-b"></div>' +
+      '</div>';
+    $(".main").appendChild(hub);
+    $("#hub-back").onclick = closeEditHub;
+
+    const a = $("#hub-a"), b = $("#hub-b");
+    a.appendChild(hubOption("grid", "Corregir datos de varias personas",
+      "Se abre una tabla para cambiar nombres, correos o teléfonos de " + plural(activos, "colaborador", "colaboradores") + " sin salir de la pantalla.",
+      null, () => { hubReturn = true; closeEditHub(true); openEditor(); }));
+    a.appendChild(hubOption("file", "Reemplazar la lista con un Excel",
+      "La lista de Veeda queda igual al archivo que subas. Antes de aplicar nada te decimos a quién se le daría de baja.",
+      "Da de baja a quien no venga", () => { hubReturn = true; closeEditHub(true); openModal("excel"); }));
+
+    b.appendChild(hubOption("out", "Personas dadas de baja",
+      bajas ? "Ver a " + plural(bajas, "persona que ya salió", "personas que ya salieron") + " y volver a activarlas si hace falta."
+            : "Aquí aparecen quienes salen de la empresa; ahorita no hay ninguna.",
+      null, () => { closeEditHub(); setTab("baja"); }));
+    b.appendChild(hubOption("down", "Descargar en Excel",
+      "Baja un archivo con lo que ahorita está en pantalla, con los filtros que tengas puestos.",
+      null, () => { closeEditHub(); $("#btn-export").click(); }));
+
+    document.addEventListener("keydown", hubEsc);
+  }
+
+  function hubEsc(e) { if (e.key === "Escape") closeEditHub(); }
+
+  function closeEditHub(keepReturn) {
+    const h = $(".hub");
+    if (h) h.remove();
+    document.removeEventListener("keydown", hubEsc);
+    if (!keepReturn) hubReturn = false;
+  }
+
+  // Edits the selected rows, or everything the current filters leave on screen.
+  // Opens as its own full-screen spreadsheet, not as a sheet over the table.
+  function openEditor() {
+    const pool = visible();
+    const targets = state.sel.size ? pool.filter(u => state.sel.has(u.id)) : pool;
+    if (!targets.length) { toast("No hay a quién editar: los filtros no dejaron a nadie en la lista. Quita un filtro y vuelve a intentar.", true); return; }
+    sheetKind = "edit";
+    draft = targets.map(editableRow);
+    openFullEditor(state.sel.size
+      ? "Editando " + targets.length + (targets.length === 1 ? " colaborador seleccionado" : " colaboradores seleccionados")
+      : "Editando " + targets.length + (targets.length === 1 ? " colaborador de la lista" : " colaboradores de la lista"));
+  }
+
+  /* ---------- capture pages ----------
+     Two separate full-screen pages, never one page with tabs: capturing by hand
+     and importing a file are different errands and each one owns its screen. */
+  const PAGE_COPY = {
+    uno: { title: "Agregar una persona", sub: "Llena sus datos y guarda. Puedes seguir agregando de una en una." },
+    tabla: { title: "Agregar varias a la vez", sub: "Una fila por persona. Cuando termines, pulsa Guardar." },
+    excel: { title: "Reemplazar la lista con un Excel", sub: "Sube el archivo y revísalo antes de aplicarlo" }
+  };
+
+  function openAddPage() {
+    const copy = PAGE_COPY[mode] || PAGE_COPY.tabla;
+    const pg = el("div", { class: "editor", id: "add-page", role: "region", "aria-label": copy.title });
+    pg.innerHTML =
+      '<header class="ed-top">' +
+        '<button class="ed-back" id="m-back" aria-label="Volver">' +
+          '<svg class="ico" viewBox="0 0 24 24"><line x1="20" y1="12" x2="5" y2="12"></line><polyline points="11 6 5 12 11 18"></polyline></svg></button>' +
+        '<div class="ed-title"><h2 id="m-title">' + copy.title + '</h2><p id="m-sub">' + copy.sub + '</p></div>' +
+        '<div class="ed-actions">' +
+          '<span class="footnote" id="m-status"></span>' +
+          '<button class="btn btn-ghost" id="m-cancel">Cancelar</button>' +
+          '<button class="btn btn-primary" id="m-submit"></button>' +
+        '</div>' +
+      '</header>' +
+      '<div class="ed-body" id="m-body"></div>';
+    $(".main").appendChild(pg);
+
+    $("#m-back").onclick = tryCloseAdd;
+    $("#m-cancel").onclick = tryCloseAdd;
+    document.addEventListener("keydown", escClose);
+    paintModal();
+  }
+
+  function escClose(e) { if (e.key === "Escape") tryCloseAdd(); }
+
+  // Leaving with something captured asks a plain question, not "press it twice"
+  function tryCloseAdd() {
+    const filled = mode === "excel" ? 0 : draft.filter(r => !rowIsEmpty(r)).length;
+    const salir = () => {
+      const n = unoSaved.length;
+      closeModal(); render();
+      // What she already saved is saved; say so, or leaving feels like losing it.
+      if (n) toast(n === 1 ? unoSaved[0] + " quedó agregada a la lista." : n + " personas quedaron agregadas a la lista.");
+      unoSaved = [];
+      if (hubReturn) { hubReturn = false; openEditHub(); }
+    };
+    if (!filled && !parsed) { salir(); return; }
+    openConfirm({
+      title: "¿Salir sin guardar?",
+      lead: filled
+        ? "Tienes " + plural(filled, "persona capturada que todavía no se guarda", "personas capturadas que todavía no se guardan") + "."
+        : "El archivo que subiste todavía no se ha aplicado.",
+      body: '<div class="note calm">Si sales ahora, eso se pierde y hay que capturarlo otra vez. Si quieres conservarlo, regresa y pulsa el botón verde de Guardar.</div>',
+      confirm: "Sí, salir sin guardar",
+      cancel: "Seguir capturando",
+      danger: true,
+      onConfirm: salir
+    });
+  }
+
+  function closeModal() {
+    const pg = $("#add-page");
+    if (pg) pg.remove();
+    document.removeEventListener("keydown", escClose);
+  }
+
+  // Switching between "one at a time" and the quick table keeps whatever is
+  // already typed, so nobody loses a half-filled row by looking around.
+  function setMode(next) {
+    mode = next;
+    const c = PAGE_COPY[mode] || PAGE_COPY.uno;
+    $("#m-title").textContent = c.title;
+    $("#m-sub").textContent = c.sub;
+    paintModal();
+  }
+
+  function paintModal() {
+    const body = $("#m-body");
+    const submit = $("#m-submit");
+    body.innerHTML = "";
+    $("#m-status").textContent = "";
+    submit.hidden = false;
+    if (mode === "uno") { submit.hidden = true; paintUno(body); }
+    else if (mode === "tabla") { paintTabla(body); submit.textContent = "Guardar"; submit.disabled = false; submit.onclick = saveTabla; }
+    else { paintExcel(body); submit.textContent = "Ver qué va a pasar"; submit.disabled = !parsed || !parsed.ok.length; submit.onclick = saveExcel; }
+  }
+
+  /* --- modo tabla --- */
+  // label + share of the row width; they add up to 100 so nothing overflows
+  const RT_COLS = [
+    ["#", 3], ["Nombre", 10], ["Apellido paterno", 10], ["Apellido materno", 9],
+    ["Sexo", 8], ["Correo", 13], ["Lada", 8], ["Teléfono", 8],
+    ["Nacimiento", 11], ["No. de empleado", 8], ["Sucursal", 8], ["", 4]
+  ];
+  /* --- one at a time --- */
+  // What each field says when it is wrong. Plain sentences: what is missing and,
+  // where it helps, an example of what a good answer looks like.
+  const FIELD_ERR = {
+    first: "Falta el nombre.",
+    last: "Falta el apellido paterno.",
+    last2: "Falta el apellido materno.",
+    sex: "Elige una opción de la lista.",
+    email: "El correo no se ve bien. Tiene que llevar @ y un punto, como ana.lopez@empresa.com",
+    phone: "El teléfono va a 10 dígitos y sin la lada del país, así: 8112045511",
+    dob: "Falta la fecha de nacimiento."
+  };
+
+  let unoSaved = []; // people saved without leaving the page, to show her the tally
+
+  function paintUno(body) {
+    const r = draft[0] || (draft[0] = blankRow());
+    const form = el("div", { class: "form1" });
+
+    if (unoSaved.length) {
+      const done = el("div", { class: "saved" });
+      done.innerHTML = "<b>Ya llevas " + plural(unoSaved.length, "persona agregada", "personas agregadas") +
+        "</b> en esta pantalla: " + esc(unoSaved.join(", ")) + ".";
+      form.appendChild(done);
+    }
+
+    // label + input + its own error line, all stacked
+    function box(key, label, opcional, node, help) {
+      const b = el("div", { class: "fbox" });
+      const id = "u-" + key;
+      const lb = el("label", { for: id });
+      lb.textContent = label;
+      b.appendChild(lb);
+      // The phone field arrives wrapped (country code + number), so the id and
+      // the label have to land on the box she actually types in.
+      const target = /^(INPUT|SELECT)$/.test(node.tagName) ? node : (node.querySelector("input") || node.querySelector("select"));
+      target.id = id;
+      b.appendChild(node);
+      if (r.bad[key]) b.appendChild(el("p", { class: "ferr" }, FIELD_ERR[key] || "Falta este dato."));
+      else if (help || opcional) b.appendChild(el("p", { class: "fhelp" }, help || "Si no lo tienes, déjalo en blanco."));
+      return b;
+    }
+    function text(key, ph, mono) {
+      const n = el("input", { class: "field" + (mono ? " mono" : ""), placeholder: ph || "" });
+      n.value = r[key] || "";
+      if (r.bad[key]) n.setAttribute("data-bad", "true");
+      n.oninput = () => { r[key] = n.value; n.removeAttribute("data-bad"); delete r.bad[key]; };
+      return n;
+    }
+    function select(key, opts) {
+      const n = el("select", { class: "field" });
+      opts.forEach(([v, l]) => n.appendChild(el("option", { value: v }, l)));
+      n.value = r[key] || "";
+      if (r.bad[key]) n.setAttribute("data-bad", "true");
+      n.onchange = () => { r[key] = n.value; n.removeAttribute("data-bad"); delete r.bad[key]; };
+      return n;
+    }
+    function group(titulo, filas, dos) {
+      const g = el("div", { class: "fgroup" });
+      g.appendChild(el("h3", null, titulo));
+      const row = el("div", { class: "frow" + (dos ? " two" : "") });
+      filas.forEach(f => row.appendChild(f));
+      g.appendChild(row);
+      return g;
+    }
+
+    form.appendChild(group("¿Cómo se llama?", [
+      box("first", "Nombre", false, text("first", "María")),
+      box("last", "Apellido paterno", false, text("last", "González")),
+      box("last2", "Apellido materno", false, text("last2", "Ramírez"))
+    ]));
+
+    const tel = el("div", { class: "fphone" });
+    const ld = select("lada", [["+52", "🇲🇽 +52"], ["+1", "🇺🇸 +1"], ["+58", "🇻🇪 +58"], ["+34", "🇪🇸 +34"]]);
+    tel.appendChild(ld);
+    tel.appendChild(text("phone", "8112045511", true));
+    form.appendChild(group("¿A dónde le mandamos la invitación?", [
+      box("email", "Correo", false, text("email", "maria.gonzalez@empresa.com")),
+      box("phone", "WhatsApp", false, tel, "A este número le llega el mensaje para entrar a Veeda.")
+    ], true));
+
+    const dt = el("input", { class: "field mono", type: "date" });
+    dt.value = r.dob || "";
+    if (r.bad.dob) dt.setAttribute("data-bad", "true");
+    dt.oninput = () => { r.dob = dt.value; dt.removeAttribute("data-bad"); delete r.bad.dob; };
+    form.appendChild(group("Sus datos", [
+      box("sex", "Sexo", false, select("sex", [["", "Elige una opción"], ["male", "Masculino"], ["female", "Femenino"]])),
+      box("dob", "Fecha de nacimiento", false, dt, "Día, mes y año. Pulsa la casilla y se abre un calendario."),
+      box("empno", "Número de empleado", true, text("empno", "EMP-100")),
+      box("sucursal", "Sucursal", true, select("sucursal", [["", "— Sin sucursal —"]].concat(SUCURSALES.map(x => [x, x]))))
+    ]));
+
+    const foot = el("div", { class: "form1-foot" });
+    const otra = el("button", { class: "btn btn-soft" }, "Guardar y agregar otra");
+    otra.onclick = () => saveUno(true);
+    const fin = el("button", { class: "btn btn-primary" }, "Guardar y terminar");
+    fin.onclick = () => saveUno(false);
+    foot.appendChild(fin); foot.appendChild(otra);
+    form.appendChild(foot);
+
+    const sw = el("div", { class: "switch" });
+    sw.appendChild(document.createTextNode("¿Vas a dar de alta a muchas de golpe? "));
+    const link = el("button", null, "Cámbiate a la tabla para llenar varias a la vez");
+    link.onclick = () => setMode("tabla");
+    sw.appendChild(link);
+    form.appendChild(sw);
+
+    body.appendChild(form);
+  }
+
+  function saveUno(seguir) {
+    clearBadToasts();
+    const r = draft[0];
+    const bad = validateDraft([r]);
+    if (bad) {
+      paintModal();
+      const first = ["first", "last", "last2", "email", "phone", "sex", "dob"].find(k => r.bad[k]);
+      const node = first && $("#u-" + first);
+      if (node) { node.focus(); node.scrollIntoView({ block: "center" }); }
+      toast("Faltan datos por corregir. Abajo de cada casilla en rojo te decimos qué falta.", true);
+      return;
+    }
+    const u = addUser({
+      first: r.first.trim(), last: r.last.trim(), last2: r.last2.trim(), sex: r.sex, email: r.email.trim(),
+      lada: r.lada, phone: digits(r.phone), dob: r.dob, empno: r.empno.trim(), sucursal: r.sucursal
+    });
+    unoSaved.push(fullName(u));
+    if (seguir) {
+      const lada = r.lada;
+      draft = [blankRow()]; draft[0].lada = lada;
+      paintModal();
+      $("#u-first").focus();
+      toast(fullName(u) + " quedó agregada. Ya puedes capturar a la siguiente.");
+    } else {
+      const n = unoSaved.length;
+      hubReturn = false;
+      closeModal(); render();
+      toast(n === 1 ? fullName(u) + " quedó agregada a la lista." : n + " personas quedaron agregadas a la lista.");
+    }
+  }
+
+  function paintTabla(body) {
+    body.appendChild(el("p", { class: "hint" }, "Llena todos los datos de cada persona. Lo único que puedes dejar en blanco es el número de empleado. Si te falta algo, al pulsar Guardar te marcamos en rojo qué corregir; nada se pierde."));
+    const wrap = el("div", { class: "tablewrap" });
+    const sc = el("div", { class: "scroll" });
+    const t = el("table", { class: "rowtable" });
+    const cg = el("colgroup");
+    RT_COLS.forEach(([, w]) => cg.appendChild(el("col", { style: "width:" + w + "%" })));
+    t.appendChild(cg);
+    const thead = el("thead");
+    const tr = el("tr");
+    RT_COLS.forEach(([label]) => tr.appendChild(el("th", null, label)));
+    thead.appendChild(tr); t.appendChild(thead);
+    const tb = el("tbody");
+
+    draft.forEach((r, i) => {
+      const row = el("tr");
+      row.appendChild(el("td", null, String(i + 1)));
+      const put = (key, node) => { const td = el("td"); td.appendChild(node); row.appendChild(td); };
+      const inp = (key, ph, mono) => {
+        const n = el("input", { class: "field" + (mono ? " mono" : ""), placeholder: ph });
+        n.value = r[key] || "";
+        if (r.bad[key]) n.setAttribute("data-bad", "true");
+        n.oninput = () => { r[key] = n.value; n.removeAttribute("data-bad"); delete r.bad[key]; };
+        return n;
+      };
+      put("first", inp("first", "Nombre"));
+      put("last", inp("last", "Apellido paterno"));
+      put("last2", inp("last2", "Apellido materno"));
+
+      const sx = el("select", { class: "field" });
+      [["", "Sexo"], ["male", "Masculino"], ["female", "Femenino"]].forEach(([v, l]) => sx.appendChild(el("option", { value: v }, l)));
+      sx.value = r.sex; if (r.bad.sex) sx.setAttribute("data-bad", "true");
+      sx.onchange = () => { r.sex = sx.value; sx.removeAttribute("data-bad"); delete r.bad.sex; };
+      put("sex", sx);
+
+      put("email", inp("email", "correo@empresa.com"));
+
+      const ld = el("select", { class: "field" });
+      [["+52", "🇲🇽 +52"], ["+1", "🇺🇸 +1"], ["+58", "🇻🇪 +58"], ["+34", "🇪🇸 +34"]].forEach(([v, l]) => ld.appendChild(el("option", { value: v }, l)));
+      ld.value = r.lada;
+      ld.onchange = () => r.lada = ld.value;
+      put("lada", ld);
+
+      put("phone", inp("phone", "Teléfono a 10 dígitos", true));
+
+      const dt = el("input", { class: "field mono", type: "date" });
+      dt.value = r.dob; if (r.bad.dob) dt.setAttribute("data-bad", "true");
+      dt.oninput = () => { r.dob = dt.value; dt.removeAttribute("data-bad"); delete r.bad.dob; };
+      put("dob", dt);
+
+      put("empno", inp("empno", "Opcional"));
+
+      const su = el("select", { class: "field" });
+      su.appendChild(el("option", { value: "" }, "— Sin sucursal —"));
+      SUCURSALES.forEach(s => su.appendChild(el("option", { value: s }, s)));
+      su.value = r.sucursal;
+      su.onchange = () => r.sucursal = su.value;
+      put("sucursal", su);
+
+      const del = el("button", { class: "icon-btn", "aria-label": "Eliminar fila", html: '<svg class="ico ico-s" viewBox="0 0 24 24"><polyline points="4 7 20 7"></polyline><path d="M9 7V5h6v2"></path><path d="M6 7l1 13h10l1-13"></path></svg>' });
+      del.onclick = () => { if (draft.length === 1) { draft = [blankRow()]; } else { draft.splice(i, 1); } paintModal(); };
+      put("del", del);
+
+      tb.appendChild(row);
+    });
+    t.appendChild(tb); sc.appendChild(t); wrap.appendChild(sc); body.appendChild(wrap);
+
+    const add = el("button", { class: "btn btn-ghost addrow", html: '<svg class="ico ico-s" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Agregar otra fila' });
+    add.onclick = () => { draft.push(blankRow()); paintModal(); };
+    body.appendChild(add);
+
+    const sw = el("div", { class: "switch", style: "padding-top:14px" });
+    sw.appendChild(document.createTextNode("¿Es una sola persona? "));
+    const link = el("button", null, "Mejor captúrala de una en una, con sus casillas grandes");
+    link.onclick = () => { draft = [draft[0] || blankRow()]; setMode("uno"); };
+    sw.appendChild(link);
+    body.appendChild(sw);
+  }
+
+  // Marks every bad field on the given rows and returns how many need fixing
+  function validateDraft(rows) {
+    let bad = 0;
+    rows.forEach(r => {
+      r.bad = {};
+      if (!r.first.trim()) r.bad.first = 1;
+      if (!r.last.trim()) r.bad.last = 1;
+      if (!r.last2.trim()) r.bad.last2 = 1;
+      if (!r.sex) r.bad.sex = 1;
+      if (!validEmail(r.email)) r.bad.email = 1;
+      if (digits(r.phone).length !== 10) r.bad.phone = 1;
+      if (!r.dob) r.bad.dob = 1;
+      bad += Object.keys(r.bad).length ? 1 : 0;
+    });
+    return bad;
+  }
+
+  function reportBadRows(bad) {
+    if (sheetKind === "edit") {
+      repaintGrid();
+      for (let r = 0; r < draft.length; r++) {
+        const c = GRID_COLS.findIndex(col => draft[r].bad[col.key]);
+        if (c >= 0) { focusCell(r, c); break; }
+      }
+    } else {
+      paintModal();
+    }
+    toast(bad === 1 ? "Revisa la celda marcada: falta el dato o el formato no es válido." : "Revisa las " + bad + " filas marcadas: faltan datos o el formato no es válido.", true);
+  }
+
+  function saveTabla() {
+    clearBadToasts();
+    const bad = validateDraft(draft);
+    if (bad) { reportBadRows(bad); return; }
+    draft.forEach(r => addUser({
+      first: r.first.trim(), last: r.last.trim(), last2: r.last2.trim(), sex: r.sex, email: r.email.trim(),
+      lada: r.lada, phone: digits(r.phone), dob: r.dob, empno: r.empno.trim(), sucursal: r.sucursal
+    }));
+    const n = draft.length;
+    hubReturn = false;
+    closeModal(); render();
+    toast(n === 1 ? "1 colaborador agregado." : n + " colaboradores agregados.");
+  }
+
+  function saveEdits() {
+    const rows = draft.filter(r => !rowIsEmpty(r));
+    const bad = validateDraft(rows);
+    if (bad) { reportBadRows(bad); return; }
+
+    let changed = 0, added = 0;
+    rows.forEach(r => {
+      const next = {
+        first: r.first.trim(), last: r.last.trim(), last2: r.last2.trim(), sex: r.sex,
+        email: r.email.trim(), lada: r.lada, phone: digits(r.phone), dob: r.dob,
+        empno: r.empno.trim(), sucursal: r.sucursal
+      };
+      if (r.id == null) { addUser(next); added++; return; }
+      const u = state.users.find(x => x.id === r.id);
+      if (!u) return;
+      if (Object.keys(next).some(k => u[k] !== next[k])) changed++;
+      Object.assign(u, next);
+    });
+
+    hubReturn = false;
+    closeEditor();
+    state.sel.clear();
+    render();
+
+    const parts = [];
+    if (changed) parts.push(changed === 1 ? "1 colaborador actualizado" : changed + " colaboradores actualizados");
+    if (added) parts.push(added === 1 ? "1 colaborador agregado" : added + " colaboradores agregados");
+    toast(parts.length ? parts.join(" y ") + "." : "No hubo cambios que guardar.");
+  }
+
+  function addUser(d) {
+    const u = {
+      id: ++uid, first: d.first, last: d.last, last2: d.last2, sex: d.sex, email: d.email,
+      lada: d.lada || "+52", phone: d.phone, dob: d.dob, empno: d.empno || "",
+      sucursal: d.sucursal || "", ciudad: d.ciudad || "", area: "", reporta: "—", tipo: "Colaborador",
+      alta: todayISO(), acceso: "", onboarding: "Pendiente", servicio: false, baja: false,
+      citasFuturas: 0, envio: null, bajaFecha: "", bajaPor: "", bajaProgramada: ""
+    };
+    state.users.push(u);
+    logMov(u.id, "alta", "Alta desde el portal");
+    return u;
+  }
+
+
+  /* --- full-screen spreadsheet editor --- */
+  const GRID_COLS = [
+    { key: "first", label: "Nombre", w: 160 },
+    { key: "last", label: "Apellido paterno", w: 160 },
+    { key: "last2", label: "Apellido materno", w: 160 },
+    { key: "sex", label: "Sexo", w: 130, opts: [["", "—"], ["male", "Masculino"], ["female", "Femenino"]] },
+    { key: "email", label: "Correo", w: 260 },
+    { key: "lada", label: "Lada", w: 115, opts: [["+52", "🇲🇽 +52"], ["+1", "🇺🇸 +1"], ["+58", "🇻🇪 +58"], ["+34", "🇪🇸 +34"]] },
+    { key: "phone", label: "Teléfono", w: 140, mono: true },
+    { key: "dob", label: "Nacimiento", w: 165, type: "date", mono: true },
+    { key: "empno", label: "No. de empleado", w: 160, mono: true },
+    { key: "sucursal", label: "Sucursal", w: 190, opts: null }
+  ];
+  const COL_LETTER = i => String.fromCharCode(65 + i);
+
+  let gridCells = [];
+
+  function gridOptions(col) {
+    if (col.key === "sucursal") return [["", "—"]].concat(SUCURSALES.map(v => [v, v]));
+    return col.opts;
+  }
+
+  // Values pasted from a spreadsheet arrive as plain text; coerce them per column
+  function coerceCell(col, raw) {
+    const v = String(raw == null ? "" : raw).trim();
+    if (col.key === "sex") return normSex(v);
+    if (col.key === "dob") return parseDOB(v);
+    if (col.key === "phone") return digits(v);
+    if (col.key === "lada") return v ? (v.startsWith("+") ? v : "+" + digits(v)) : "+52";
+    if (col.key === "sucursal") return SUCURSALES.find(x => x.toLowerCase() === v.toLowerCase()) || "";
+    return v;
+  }
+
+  function focusCell(r, c, pick) {
+    if (r < 0 || r >= gridCells.length || c < 0 || c >= GRID_COLS.length) return;
+    const n = gridCells[r][c];
+    if (!n) return;
+    n.focus();
+    if (pick !== false && n.tagName === "INPUT" && n.type !== "date") { try { n.select(); } catch (e) {} }
+  }
+
+  function stepCell(r, c, back) {
+    const next = back ? c - 1 : c + 1;
+    if (next < 0) focusCell(r - 1, GRID_COLS.length - 1);
+    else if (next >= GRID_COLS.length) focusCell(r + 1, 0);
+    else focusCell(r, next);
+  }
+
+  function paintCellState(td, row, key) {
+    if (row.bad[key]) td.setAttribute("data-bad", "true"); else td.removeAttribute("data-bad");
+    if (cellDirty(row, key)) td.setAttribute("data-dirty", "true"); else td.removeAttribute("data-dirty");
+  }
+
+  function countEdits() {
+    let n = 0;
+    draft.forEach(r => GRID_KEYS.forEach(k => { if (cellDirty(r, k)) n++; }));
+    return n;
+  }
+
+  function paintGridStatus() {
+    const st = $("#ed-status");
+    if (!st) return;
+    const rows = draft.filter(r => !rowIsEmpty(r)).length;
+    const edits = countEdits();
+    st.textContent = editorSubtitle + " · " + rows + (rows === 1 ? " fila · " : " filas · ") +
+      (edits === 0 ? "sin cambios" : edits === 1 ? "1 cambio sin guardar" : edits + " cambios sin guardar");
+  }
+
+  // The name box and the read-out next to it, like a spreadsheet's cell reference
+  function paintCellRef(r, c) {
+    const ref = $("#ed-ref"), val = $("#ed-val");
+    if (!ref) return;
+    if (r == null) { ref.textContent = "—"; val.textContent = ""; return; }
+    const col = GRID_COLS[c];
+    ref.textContent = COL_LETTER(c) + (r + 1);
+    const raw = draft[r] ? draft[r][col.key] || "" : "";
+    const opts = gridOptions(col);
+    const shown = opts ? ((opts.find(o => o[0] === raw) || ["", "—"])[1]) : (raw || "vacía");
+    val.textContent = col.label + " · " + shown;
+  }
+
+  let editorSubtitle = "";
+
+  function openFullEditor(subtitle) {
+    editorSubtitle = subtitle;
+    const ed = el("div", { class: "editor", role: "region", "aria-label": "Corregir datos" });
+    ed.innerHTML =
+      '<header class="ed-top">' +
+        '<button class="ed-back" id="ed-back" aria-label="Volver a la lista">' +
+          '<svg class="ico" viewBox="0 0 24 24"><line x1="20" y1="12" x2="5" y2="12"></line><polyline points="11 6 5 12 11 18"></polyline></svg></button>' +
+        '<div class="ed-title"><h2>Corregir datos</h2><p id="ed-status"></p></div>' +
+        '<div class="ed-actions">' +
+          '<button class="btn btn-ghost" id="ed-cancel">Cancelar</button>' +
+          '<button class="btn btn-primary" id="ed-save">Guardar cambios</button>' +
+        '</div>' +
+      '</header>' +
+      '<div class="ed-bar">' +
+        '<span class="ed-ref" id="ed-ref">—</span>' +
+        '<span class="ed-fx">fx</span><span class="ed-val" id="ed-val"></span>' +
+        '<span class="ed-legend">' +
+          '<span class="legend"><i></i>Cambio sin guardar</span>' +
+          '<span class="legend bad"><i></i>Falta corregir</span>' +
+        '</span>' +
+      '</div>' +
+      '<p class="ed-tip">Escribe directo sobre el dato que quieras cambiar. Para pasar al siguiente usa la tecla Tab o las flechas del teclado. Cuando termines, pulsa el botón verde de Guardar cambios. Para quitar a alguien de la lista no borres su fila: usa Dar de baja.</p>' +
+      '<div class="ed-grid" id="ed-grid"></div>';
+    $(".main").appendChild(ed);
+
+    $("#ed-back").onclick = tryCloseEditor;
+    $("#ed-cancel").onclick = tryCloseEditor;
+    $("#ed-save").onclick = saveEdits;
+    repaintGrid();
+    focusCell(0, 0);
+  }
+
+  function closeEditor() {
+    const ed = $(".editor");
+    if (ed) ed.remove();
+    gridCells = [];
+  }
+
+  // Leaving with pending edits asks a plain question, not "press it twice"
+  function tryCloseEditor() {
+    const edits = countEdits();
+    const salir = () => { closeEditor(); if (hubReturn) { hubReturn = false; openEditHub(); } };
+    if (!edits) { salir(); return; }
+    openConfirm({
+      title: "¿Salir sin guardar?",
+      lead: "Hiciste " + plural(edits, "cambio que todavía no se guarda", "cambios que todavía no se guardan") + ".",
+      body: '<div class="note calm">Si sales ahora, esos cambios se pierden. Si quieres conservarlos, regresa y pulsa el botón verde de Guardar cambios.</div>',
+      confirm: "Sí, salir sin guardar",
+      cancel: "Seguir editando",
+      danger: true,
+      onConfirm: salir
+    });
+  }
+
+  function repaintGrid() {
+    const host = $("#ed-grid");
+    if (!host) return;
+    host.innerHTML = "";
+    host.appendChild(buildGrid());
+
+    const add = el("button", { class: "gridadd", html: '<svg class="ico ico-s" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Agregar fila' });
+    add.onclick = () => {
+      draft.push(editableRow(null));
+      repaintGrid();
+      focusCell(draft.length - 1, 0);
+    };
+    host.appendChild(add);
+    paintGridStatus();
+  }
+
+  function buildGrid() {
+    const t = el("table", { class: "grid" });
+
+    const cg = el("colgroup");
+    cg.appendChild(el("col", { style: "width:46px" }));
+    GRID_COLS.forEach(c => cg.appendChild(el("col", { style: "width:" + c.w + "px" })));
+    t.appendChild(cg);
+
+    const thead = el("thead");
+    const letters = el("tr", { class: "letters" });
+    letters.appendChild(el("th", { class: "gut" }, ""));
+    GRID_COLS.forEach((c, i) => letters.appendChild(el("th", { class: i === 0 ? "col1" : "" }, COL_LETTER(i))));
+    const names = el("tr", { class: "names" });
+    names.appendChild(el("th", { class: "gut" }, "#"));
+    GRID_COLS.forEach((c, i) => names.appendChild(el("th", { class: i === 0 ? "col1" : "" }, c.label)));
+    thead.appendChild(letters); thead.appendChild(names);
+    t.appendChild(thead);
+
+    const tb = el("tbody");
+    gridCells = [];
+
+    draft.forEach((row, r) => {
+      const tr = el("tr");
+      tr.appendChild(el("td", { class: "gut" }, String(r + 1)));
+      const line = [];
+
+      GRID_COLS.forEach((col, c) => {
+        const td = el("td", { "data-r": String(r), "data-c": String(c), class: c === 0 ? "col1" : "" });
+        const opts = gridOptions(col);
+        let n;
+        if (opts) {
+          n = el("select", { class: "cellin", "aria-label": col.label + ", fila " + (r + 1) });
+          opts.forEach(([v, l]) => n.appendChild(el("option", { value: v }, l)));
+          n.value = row[col.key] || "";
+          n.onchange = () => {
+            row[col.key] = n.value; delete row.bad[col.key];
+            paintCellState(td, row, col.key); paintGridStatus(); paintCellRef(r, c);
+          };
+        } else {
+          n = el("input", { class: "cellin" + (col.mono ? " mono" : ""), "aria-label": col.label + ", fila " + (r + 1) });
+          if (col.type) n.type = col.type;
+          n.value = row[col.key] || "";
+          n.oninput = () => {
+            row[col.key] = n.value; delete row.bad[col.key];
+            paintCellState(td, row, col.key); paintGridStatus(); paintCellRef(r, c);
+          };
+        }
+        n.onfocus = () => { td.setAttribute("data-active", "true"); paintCellRef(r, c); };
+        n.onblur = () => td.removeAttribute("data-active");
+        n.onkeydown = e => {
+          const text = n.tagName === "INPUT" && n.type !== "date";
+          const atStart = !text || n.selectionStart === 0;
+          const atEnd = !text || n.selectionEnd === n.value.length;
+          if (e.key === "Enter") { e.preventDefault(); focusCell(r + (e.shiftKey ? -1 : 1), c); }
+          else if (e.key === "Tab") { e.preventDefault(); stepCell(r, c, e.shiftKey); }
+          else if (e.key === "ArrowDown") { e.preventDefault(); focusCell(r + 1, c); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); focusCell(r - 1, c); }
+          else if (e.key === "ArrowLeft" && atStart) { e.preventDefault(); focusCell(r, c - 1); }
+          else if (e.key === "ArrowRight" && atEnd) { e.preventDefault(); focusCell(r, c + 1); }
+          else if (e.key === "Escape") {
+            e.stopPropagation();
+            const back = row.orig ? row.orig[col.key] || "" : "";
+            n.value = back; row[col.key] = back;
+            delete row.bad[col.key];
+            paintCellState(td, row, col.key); paintGridStatus(); paintCellRef(r, c);
+          }
+        };
+        paintCellState(td, row, col.key);
+        td.appendChild(n);
+        tr.appendChild(td);
+        line.push(n);
+      });
+
+      gridCells.push(line);
+      tb.appendChild(tr);
+    });
+
+    t.appendChild(tb);
+
+    // Multi-cell paste, so a block copied from a spreadsheet lands in one go
+    t.addEventListener("paste", e => {
+      const data = (e.clipboardData || window.clipboardData);
+      if (!data) return;
+      const text = data.getData("text");
+      if (!text || !/[\t\n]/.test(text)) return;
+      const td = e.target.closest("td[data-r]");
+      if (!td) return;
+      e.preventDefault();
+      applyPaste(+td.dataset.r, +td.dataset.c, text);
+    });
+
+    return t;
+  }
+
+  function applyPaste(r0, c0, text) {
+    const matrix = text.replace(/\r/g, "").replace(/\n+$/, "").split("\n").map(l => l.split("\t"));
+    matrix.forEach((line, dr) => {
+      const r = r0 + dr;
+      while (draft.length <= r) draft.push(editableRow(null));
+      const row = draft[r];
+      line.forEach((raw, dc) => {
+        const col = GRID_COLS[c0 + dc];
+        if (!col) return;
+        row[col.key] = coerceCell(col, raw);
+        delete row.bad[col.key];
+      });
+    });
+    repaintGrid();
+    focusCell(r0, c0);
+    const cells = matrix.reduce((n, l) => n + l.length, 0);
+    toast(cells + (cells === 1 ? " celda pegada." : " celdas pegadas."));
+  }
+
+  /* --- modo excel ----
+     A mirror import, not a top-up: the file becomes the whole list. Everything
+     on this screen says so before a file is even chosen. */
+  function paintExcel(body) {
+    const activos = state.users.filter(u => !u.baja).length;
+    const warn = el("div", { class: "note warn", style: "margin-bottom:16px" });
+    warn.innerHTML = '<b>El archivo reemplaza la lista completa</b>' +
+      'Solo cuenta lo que venga en el Excel. Quien esté hoy en Veeda y no aparezca en el archivo <b style="display:inline">se da de baja automáticamente</b> y pierde el acceso ese mismo día. ' +
+      'Hoy hay ' + plural(activos, "colaborador activo", "colaboradores activos") + ', así que el archivo tiene que traerlos a todos, no solo a los nuevos.' +
+      '<div style="padding-top:8px">¿Solo quieres dar de alta a algunos? Regresa y usa <b style="display:inline">Agregar colaboradores</b>. ' +
+      'Antes de aplicar nada te decimos a quién se le daría de baja, y las bajas se pueden revertir desde «Dados de baja».</div>';
+    body.appendChild(warn);
+
+    const info = el("div", { class: "info" });
+    info.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="margin-top:2px;color:var(--info-text);flex:none"><circle cx="12" cy="12" r="8.5"></circle><line x1="12" y1="11" x2="12" y2="16"></line><line x1="12" y1="8" x2="12" y2="8.01"></line></svg>' +
+      '<div><h3>Cómo se hace, en tres pasos</h3>' +
+      '<p><b>1.</b> Pulsa <b>«Descargar la lista de hoy para editarla»</b>. Baja un Excel que ya trae a ' +
+        plural(state.users.filter(u => !u.baja).length, "colaborador", "colaboradores") + ', uno por renglón.</p>' +
+      '<p><b>2.</b> Ábrelo y edítalo: corrige lo que esté mal, <b>agrega renglones abajo</b> para la gente nueva y <b>borra el renglón completo</b> de quien ya salió de la empresa. Guárdalo.</p>' +
+      '<p><b>3.</b> Súbelo aquí. Antes de aplicar nada te enseñamos a quién se le daría de baja.</p>' +
+      '<p>El archivo se revisa solo mientras escribes: si pones algo raro en <b>Sexo</b>, <b>Lada</b>, <b>Teléfono</b> o <b>Fecha de nacimiento</b>, Excel te avisa en ese momento y la casilla se pinta de rojo.</p>' +
+      '<p><b>No borres ni muevas el primer renglón</b>, el de los títulos verdes: por ahí se sabe qué es cada columna. Número de empleado, Sucursal y Ciudad se pueden dejar en blanco.</p></div>';
+    body.appendChild(info);
+
+    if (parsed) { body.appendChild(reportView()); return; }
+
+    const drop = el("div", { class: "drop", role: "button", tabindex: "0" });
+    drop.innerHTML = '<div class="disc"><svg class="ico" viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M12 16V5"></path><polyline points="7.5 9.5 12 5 16.5 9.5"></polyline><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"></path></svg></div>' +
+      '<b>Subir el Excel ya editado</b><small>Arrástralo aquí o haz clic para buscarlo</small>';
+    const file = el("input", { type: "file", accept: ".xlsx,.xls,.csv", style: "display:none" });
+    file.onchange = () => { if (file.files[0]) readFile(file.files[0]); };
+    drop.onclick = () => file.click();
+    drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); file.click(); } };
+    drop.ondragover = e => { e.preventDefault(); drop.setAttribute("data-over", "true"); };
+    drop.ondragleave = () => drop.removeAttribute("data-over");
+    drop.ondrop = e => { e.preventDefault(); drop.removeAttribute("data-over"); if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); };
+
+    const tpl = el("button", { class: "btn btn-ghost", html: '<svg class="ico ico-s" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="14 3 14 9 20 9"></polyline></svg>Descargar la lista de hoy para editarla' });
+    tpl.onclick = e => { e.stopPropagation(); downloadTemplate(); };
+    drop.appendChild(tpl);
+    drop.appendChild(file);
+    body.appendChild(drop);
+  }
+
+  /* ---------- the Excel template ----------
+     SheetJS's free build cannot write data validation, and the whole point of
+     the template is that Excel objects while she is still typing — not after
+     she uploads a file full of bad phone numbers. So the workbook is assembled
+     by hand here and packed into a stored (uncompressed) zip, which Excel and
+     Google Sheets both open without complaint. */
+
+  // What each column is called in the file she downloads, in her words.
+  const TPL_COLS = [
+    { head: "Nombre", w: 16, ej: "María" },
+    { head: "Apellido paterno", w: 18, ej: "González" },
+    { head: "Apellido materno", w: 18, ej: "Ramírez" },
+    { head: "Sexo (Hombre o Mujer)", w: 22, ej: "Mujer" },
+    { head: "Correo electrónico (ej: correo@gmail.com)", w: 34, ej: "maria.gonzalez@empresa.com" },
+    { head: "Lada (ej: +52)", w: 15, ej: "+52", texto: true },
+    { head: "Teléfono (10 Digitos)", w: 20, ej: "8112045511", texto: true },
+    { head: "Fecha de nacimiento (DD/MM/AAAA)", w: 28, ej: "15/04/1990", texto: true },
+    { head: "Número de empleado (Opcional)", w: 26, ej: "EMP-100" },
+    { head: "Sucursal (Opcional)", w: 20, ej: "Monterrey Centro" },
+    { head: "Ciudad (Opcional)", w: 18, ej: "Monterrey" }
+  ];
+  const TPL_HEAD = TPL_COLS.map(c => c.head);
+  const TPL_LAST = 1001; // how far down the validations reach
+
+  const xesc = v => String(v == null ? "" : v)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+  const colLetter = i => String.fromCharCode(65 + i);
+
+  const CRC_TABLE = (() => {
+    const t = new Int32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      t[i] = c;
+    }
+    return t;
+  })();
+  function crc32(b) {
+    let c = -1;
+    for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ -1) >>> 0;
+  }
+  const utf8 = str => new TextEncoder().encode(str);
+
+  // Stored (method 0) zip. No compression keeps this to a few dozen lines and
+  // the whole workbook is under 10 KB anyway.
+  function zipStore(files) {
+    const chunks = [], central = [];
+    let offset = 0;
+    files.forEach(f => {
+      const name = utf8(f.name), data = utf8(f.xml), crc = crc32(data);
+      const lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+      lh.setUint16(8, 0, true); lh.setUint16(10, 0, true); lh.setUint16(12, 0x21, true);
+      lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true);
+      lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      chunks.push(new Uint8Array(lh.buffer), name, data);
+
+      const cd = new DataView(new ArrayBuffer(46));
+      cd.setUint32(0, 0x02014b50, true); cd.setUint16(4, 20, true); cd.setUint16(6, 20, true);
+      cd.setUint16(8, 0x0800, true); cd.setUint16(10, 0, true);
+      cd.setUint16(12, 0, true); cd.setUint16(14, 0x21, true);
+      cd.setUint32(16, crc, true); cd.setUint32(20, data.length, true); cd.setUint32(24, data.length, true);
+      cd.setUint16(28, name.length, true); cd.setUint32(42, offset, true);
+      central.push(new Uint8Array(cd.buffer), name);
+      offset += 30 + name.length + data.length;
+    });
+    const cdSize = central.reduce((n, c) => n + c.length, 0);
+    const eo = new DataView(new ArrayBuffer(22));
+    eo.setUint32(0, 0x06054b50, true);
+    eo.setUint16(8, files.length, true); eo.setUint16(10, files.length, true);
+    eo.setUint32(12, cdSize, true); eo.setUint32(16, offset, true);
+    const all = chunks.concat(central, [new Uint8Array(eo.buffer)]);
+    const total = all.reduce((n, c) => n + c.length, 0);
+    const out = new Uint8Array(total);
+    let at = 0;
+    all.forEach(c => { out.set(c, at); at += c.length; });
+    return out;
+  }
+
+  // Same rules the importer applies, written as Excel formulas so she finds out
+  // at the moment she types instead of at the moment she uploads.
+  const TPL_RULES = [
+    {
+      col: 3, // D · Sexo
+      list: '"Hombre,Mujer"',
+      promptTitle: "Sexo", prompt: "Escoge Hombre o Mujer con la flechita.",
+      errorTitle: "Aquí solo va Hombre o Mujer",
+      error: "En esta columna nada más se puede escribir Hombre o Mujer. Pulsa la flechita de la casilla y escoge una.",
+      mal: 'AND(D2<>"",D2<>"Hombre",D2<>"Mujer")'
+    },
+    {
+      col: 5, // F · Lada
+      formula: 'AND(LEFT(F2,1)="+",LEN(F2)>=2,LEN(F2)<=4,ISNUMBER(--MID(F2,2,LEN(F2)-1)))',
+      promptTitle: "Lada del país", prompt: "Empieza con + y luego hasta 3 números. Ejemplo: +52",
+      errorTitle: "La lada no se ve bien",
+      error: "La lada empieza con el signo + y lleva máximo 3 números. Ejemplo: +52",
+      mal: 'AND(F2<>"",NOT(AND(LEFT(F2,1)="+",LEN(F2)>=2,LEN(F2)<=4,ISNUMBER(--MID(F2,2,LEN(F2)-1)))))'
+    },
+    {
+      col: 6, // G · Teléfono
+      formula: 'AND(LEN(G2)=10,ISNUMBER(--G2))',
+      promptTitle: "Teléfono", prompt: "10 números, sin espacios y sin la lada del país. Ejemplo: 8112045511",
+      errorTitle: "El teléfono lleva 10 números",
+      error: "Van exactamente 10 números, sin espacios, sin guiones y sin la lada del país. Ejemplo: 8112045511",
+      mal: 'AND(G2<>"",NOT(AND(LEN(G2)=10,ISNUMBER(--G2))))'
+    },
+    {
+      col: 7, // H · Fecha de nacimiento
+      formula: 'AND(LEN(H2)=10,MID(H2,3,1)="/",MID(H2,6,1)="/",ISNUMBER(--MID(H2,7,4)),IFERROR(--LEFT(H2,2),0)>=1,IFERROR(--LEFT(H2,2),0)<=31,IFERROR(--MID(H2,4,2),0)>=1,IFERROR(--MID(H2,4,2),0)<=12)',
+      promptTitle: "Fecha de nacimiento", prompt: "Día/mes/año, con dos, dos y cuatro números. Ejemplo: 05/03/1985",
+      errorTitle: "La fecha va como DD/MM/AAAA",
+      error: "Escríbela día/mes/año, con dos números, dos números y cuatro números, separados por diagonal. Ejemplo: 05/03/1985",
+      mal: 'AND(H2<>"",NOT(AND(LEN(H2)=10,MID(H2,3,1)="/",MID(H2,6,1)="/",ISNUMBER(--MID(H2,7,4)),IFERROR(--LEFT(H2,2),0)>=1,IFERROR(--LEFT(H2,2),0)<=31,IFERROR(--MID(H2,4,2),0)>=1,IFERROR(--MID(H2,4,2),0)<=12)))'
+    }
+  ];
+
+  function tplSheetXml(filas) {
+    // Room to keep typing under whatever came down in the file.
+    const last = Math.max(TPL_LAST, filas.length + 201);
+    const cols = TPL_COLS.map((c, i) =>
+      '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + c.w + '" customWidth="1" style="' + (c.texto ? 2 : 3) + '"/>').join("");
+
+    const cell = (ref, style, text) =>
+      '<c r="' + ref + '" s="' + style + '" t="inlineStr"><is><t xml:space="preserve">' + xesc(text) + '</t></is></c>';
+    const row1 = TPL_COLS.map((c, i) => cell(colLetter(i) + "1", 1, c.head)).join("");
+    const cuerpo = filas.map((fila, n) => {
+      const r = n + 2;
+      return '<row r="' + r + '">' +
+        TPL_COLS.map((c, i) => cell(colLetter(i) + r, c.texto ? 2 : 3, fila[i])).join("") +
+        '</row>';
+    }).join("");
+
+    // Typing is caught by the validation; pasting is not, so the same rule is
+    // repeated as conditional formatting and the bad cell simply turns red.
+    const cf = TPL_RULES.map((r, i) => {
+      const L = colLetter(r.col);
+      return '<conditionalFormatting sqref="' + L + '2:' + L + last + '">' +
+        '<cfRule type="expression" dxfId="0" priority="' + (i + 1) + '"><formula>' + xesc(r.mal) + '</formula></cfRule>' +
+        '</conditionalFormatting>';
+    }).join("") +
+      // A downloaded list can carry records that were never complete. A row with
+      // something in it but a required box empty turns red, so she fixes it here
+      // instead of finding out the person got dropped after the upload.
+      '<conditionalFormatting sqref="A2:H' + last + '">' +
+      '<cfRule type="expression" dxfId="0" priority="' + (TPL_RULES.length + 1) + '">' +
+      '<formula>' + xesc('AND(COUNTA($A2:$K2)>0,A2="")') + '</formula></cfRule>' +
+      '</conditionalFormatting>';
+
+    const dv = TPL_RULES.map(r => {
+      const L = colLetter(r.col);
+      return '<dataValidation type="' + (r.list ? "list" : "custom") + '" errorStyle="stop" allowBlank="1"' +
+        ' showInputMessage="1" showErrorMessage="1"' +
+        ' promptTitle="' + xesc(r.promptTitle) + '" prompt="' + xesc(r.prompt) + '"' +
+        ' errorTitle="' + xesc(r.errorTitle) + '" error="' + xesc(r.error) + '"' +
+        ' sqref="' + L + '2:' + L + last + '">' +
+        '<formula1>' + xesc(r.list || r.formula) + '</formula1></dataValidation>';
+    }).join("");
+
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<dimension ref="A1:' + colLetter(TPL_COLS.length - 1) + Math.max(2, filas.length + 1) + '"/>' +
+      '<sheetViews><sheetView tabSelected="1" workbookViewId="0">' +
+      '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
+      '<sheetFormatPr defaultRowHeight="15"/>' +
+      '<cols>' + cols + '</cols>' +
+      '<sheetData>' +
+      '<row r="1" ht="34" customHeight="1">' + row1 + '</row>' +
+      cuerpo +
+      '</sheetData>' +
+      cf +
+      '<dataValidations count="' + TPL_RULES.length + '">' + dv + '</dataValidations>' +
+      '</worksheet>';
+  }
+
+  const TPL_STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<fonts count="2">' +
+    '<font><sz val="11"/><name val="Calibri"/></font>' +
+    '<font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font>' +
+    '</fonts>' +
+    '<fills count="3">' +
+    '<fill><patternFill patternType="none"/></fill>' +
+    '<fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF2E7D55"/><bgColor indexed="64"/></patternFill></fill>' +
+    '</fills>' +
+    '<borders count="2">' +
+    '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+    '<border><left style="thin"><color rgb="FFD9D9D9"/></left><right style="thin"><color rgb="FFD9D9D9"/></right>' +
+    '<top style="thin"><color rgb="FFD9D9D9"/></top><bottom style="thin"><color rgb="FFD9D9D9"/></bottom><diagonal/></border>' +
+    '</borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="4">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
+    '<alignment horizontal="left" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>' +
+    '</cellXfs>' +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+    '<dxfs count="1"><dxf><font><color rgb="FF9C0006"/></font>' +
+    '<fill><patternFill><bgColor rgb="FFFFC7CE"/></patternFill></fill></dxf></dxfs>' +
+    '</styleSheet>';
+
+  function buildTemplateXlsx(filas) {
+    const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+    return zipStore([
+      { name: "[Content_Types].xml", xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+        '<Default Extension="xml" ContentType="application/xml"/>' +
+        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+        '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+        '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+        '</Types>' },
+      { name: "_rels/.rels", xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="' + R + '/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+      { name: "xl/workbook.xml", xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="' + R + '">' +
+        '<sheets><sheet name="Colaboradores" sheetId="1" r:id="rId1"/></sheets></workbook>' },
+      { name: "xl/_rels/workbook.xml.rels", xml: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="' + R + '/worksheet" Target="worksheets/sheet1.xml"/>' +
+        '<Relationship Id="rId2" Type="' + R + '/styles" Target="styles.xml"/></Relationships>' },
+      { name: "xl/styles.xml", xml: TPL_STYLES },
+      { name: "xl/worksheets/sheet1.xml", xml: tplSheetXml(filas) }
+    ]);
+  }
+
+  // Everyone active, never just what the filters left on screen: the file
+  // replaces the whole list, so a filtered download would quietly propose
+  // dropping everybody who was hidden.
+  function filaDeUsuario(u) {
+    return [
+      u.first, u.last, u.last2,
+      u.sex === "female" ? "Mujer" : u.sex === "male" ? "Hombre" : "",
+      u.email, u.lada || "+52", u.phone, fechaDDMMAAAA(u.dob),
+      u.empno || "", u.sucursal || "", ciudadDe(u)
+    ];
+  }
+
+  const fechaDDMMAAAA = iso => {
+    const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? m[3] + "/" + m[2] + "/" + m[1] : "";
+  };
+
+  function downloadTemplate() {
+    const activos = state.users.filter(u => !u.baja);
+    if (!activos.length) {
+      saveFile("plantilla-colaboradores.xlsx", buildTemplateXlsx([TPL_COLS.map(c => c.ej)]));
+      toast("Todavía no hay nadie en la lista, así que el archivo baja vacío con una fila de ejemplo.");
+      return;
+    }
+    saveFile("colaboradores-para-editar.xlsx", buildTemplateXlsx(activos.map(filaDeUsuario)));
+  }
+
+  function readFile(f) {
+    if (!window.XLSX) { toast("No cargó el lector de Excel. Recarga la página; si sigue igual, captura las filas en la tabla de al lado.", true); return; }
+    const fr = new FileReader();
+    fr.onload = e => {
+      let rows;
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array", cellDates: true });
+        rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+      } catch (err) { toast("No se pudo leer «" + f.name + "». Ábrelo en Excel, guárdalo como .xlsx o .csv y vuelve a subirlo.", true); return; }
+      parsed = validateRows(rows, f.name);
+      paintModal();
+      if (!parsed.ok.length) toast("Ninguna fila del archivo pasó la revisión. Abajo está el detalle fila por fila para corregirlo en tu Excel.", true);
+    };
+    fr.readAsArrayBuffer(f);
+  }
+
+  const normHead = k => String(k)
+    .replace(/\([^)]*\)/g, " ")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
+  function pick(row, keys) {
+    for (const k of Object.keys(row)) {
+      if (keys.includes(normHead(k))) return row[k];
+    }
+    return "";
+  }
+
+  function validateRows(rows, filename) {
+    const ok = [], errors = [];
+    rows.forEach((row, i) => {
+      const n = i + 2;
+      const d = {
+        first: String(pick(row, ["first_name", "nombre"])).trim(),
+        last: String(pick(row, ["last_name", "apellido_paterno"])).trim(),
+        last2: String(pick(row, ["second_last_name", "last_second_name", "apellido_materno"])).trim(),
+        sex: normSex(pick(row, ["sex", "sexo"])),
+        email: String(pick(row, ["email", "correo", "correo_electronico"])).trim(),
+        lada: String(pick(row, ["phone_country_code", "lada"]) || "+52").trim(),
+        phone: digits(pick(row, ["phone", "telefono"])),
+        dob: parseDOB(pick(row, ["date_of_birth", "nacimiento", "fecha_nacimiento", "fecha_de_nacimiento"])),
+        empno: String(pick(row, ["employee_number", "no_empleado", "numero_empleado", "numero_de_empleado"])).trim(),
+        sucursal: String(pick(row, ["sucursal", "branch"])).trim(),
+        ciudad: String(pick(row, ["ciudad", "city"])).trim()
+      };
+      if (d.lada && !d.lada.startsWith("+")) d.lada = "+" + digits(d.lada);
+      const problems = [];
+      if (!d.first) problems.push("falta el nombre");
+      if (!d.last) problems.push("falta el apellido paterno");
+      if (!d.sex) problems.push("en Sexo va Hombre o Mujer");
+      if (!validEmail(d.email)) problems.push("el correo no se ve bien");
+      if (d.phone.length !== 10) problems.push("el teléfono debe llevar 10 números");
+      if (!d.dob) problems.push("la fecha de nacimiento va como DD/MM/AAAA");
+      if (d.sucursal && !SUCURSALES.includes(d.sucursal)) problems.push('la sucursal "' + d.sucursal + '" no está registrada');
+      if (problems.length) errors.push("Fila " + n + ": " + problems.join(", "));
+      else ok.push(d);
+    });
+    return { filename: filename, total: rows.length, ok: ok, errors: errors };
+  }
+
+  /* Compares the file against the live list, keyed by email: who stays, who is
+     new and — the part that matters — who is missing and would be dropped. */
+  function planImport() {
+    const inFile = new Map();
+    parsed.ok.forEach(d => inFile.set(String(d.email || "").toLowerCase(), d));
+    const activos = state.users.filter(u => !u.baja);
+    const update = [], baja = [];
+    const seen = new Set();
+    activos.forEach(u => {
+      const key = String(u.email || "").toLowerCase();
+      seen.add(key);
+      const d = inFile.get(key);
+      if (d) update.push({ u: u, d: d }); else baja.push(u);
+    });
+    const nuevos = parsed.ok.filter(d => !seen.has(String(d.email || "").toLowerCase()));
+    return { update: update, baja: baja, nuevos: nuevos };
+  }
+
+  function reportView() {
+    const plan = planImport();
+    const wrap = el("div", { class: "report" });
+    const head = el("div", { class: "report-head" });
+    head.innerHTML = '<span class="fname"><svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="14 3 14 9 20 9"></polyline></svg>' + parsed.filename + '</span>' +
+      '<span class="tally"><span class="good">' + plural(plan.nuevos.length, "alta", "altas") + '</span>' +
+      '<span>' + plural(plan.update.length, "se queda", "se quedan") + '</span>' +
+      (plan.baja.length ? '<span class="bad">' + plural(plan.baja.length, "baja", "bajas") + '</span>' : '') +
+      (parsed.errors.length ? '<span class="bad">' + parsed.errors.length + ' con error</span>' : '') +
+      '<span>' + parsed.total + ' filas leídas</span></span>';
+    const other = el("button", { class: "btn btn-ghost" }, "Elegir otro archivo");
+    other.onclick = () => { parsed = null; paintModal(); };
+    head.appendChild(el("div", { style: "flex-grow:1" }));
+    head.appendChild(other);
+    wrap.appendChild(head);
+
+    if (plan.baja.length) {
+      const drop = el("div", { class: "note warn" });
+      drop.innerHTML = '<b>' + plural(plan.baja.length, "colaborador se daría de baja", "colaboradores se darían de baja") + '</b>' +
+        'No vienen en el archivo, así que perderían el acceso: ' +
+        esc(plan.baja.slice(0, 8).map(fullName).join(", ")) +
+        (plan.baja.length > 8 ? ' y ' + (plan.baja.length - 8) + ' más' : '') + '.';
+      wrap.appendChild(drop);
+    }
+
+    if (parsed.errors.length) {
+      const errs = el("div", { class: "errlist" });
+      parsed.errors.forEach(t => errs.appendChild(el("div", null, t)));
+      wrap.appendChild(errs);
+    }
+    if (parsed.ok.length) {
+      const tw = el("div", { class: "tablewrap" });
+      const sc = el("div", { class: "scroll" });
+      const t = el("table");
+      t.innerHTML = '<thead><tr><th style="padding:12px">Nombre</th><th style="padding:12px">Correo</th><th style="padding:12px">Teléfono</th><th style="padding:12px">Nacimiento</th><th style="padding:12px">Sucursal</th></tr></thead>';
+      const tb = el("tbody");
+      parsed.ok.slice(0, 8).forEach(d => {
+        const tr = el("tr");
+        tr.innerHTML = '<td><span class="name">' + [d.first, d.last, d.last2].filter(Boolean).join(" ") + '</span></td><td>' + d.email + '</td>' +
+          '<td class="mono">' + d.lada + " " + d.phone + '</td><td class="mono">' + fmtDate(d.dob) + '</td><td>' + (d.sucursal || "—") + '</td>';
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); sc.appendChild(t); tw.appendChild(sc); wrap.appendChild(tw);
+      if (parsed.ok.length > 8) wrap.appendChild(el("small", { style: "color: var(--muted)" }, "y " + (parsed.ok.length - 8) + " más…"));
+    }
+    return wrap;
+  }
+
+  // Applies the file. `conBajas` is the whole difference between the two ways
+  // out of the dialog: without it nobody loses access, the file only adds.
+  function aplicarImport(plan, nombre, conBajas) {
+    plan.nuevos.forEach(addUser);
+    plan.update.forEach(({ u, d }) => {
+      const next = {
+        first: d.first, last: d.last, last2: d.last2, sex: d.sex, email: d.email,
+        lada: d.lada, phone: d.phone, dob: d.dob,
+        empno: d.empno || u.empno, sucursal: d.sucursal || u.sucursal,
+        ciudad: d.ciudad || u.ciudad || ""
+      };
+      if (Object.keys(next).some(k => u[k] !== next[k])) {
+        Object.assign(u, next);
+        logMov(u.id, "cambio", "Actualizado desde " + nombre);
+      }
+    });
+    if (conBajas) {
+      plan.baja.forEach(u => {
+        u.baja = true;
+        u.bajaFecha = todayISO();
+        u.bajaPor = ME;
+        logMov(u.id, "baja", "No venía en " + nombre);
+      });
+    }
+
+    hubReturn = false;
+    closeModal(); render();
+    if (conBajas) {
+      const partes = [];
+      if (plan.nuevos.length) partes.push(plural(plan.nuevos.length, "alta", "altas"));
+      if (plan.baja.length) partes.push(plural(plan.baja.length, "baja", "bajas"));
+      toast("Lista reemplazada con " + nombre + (partes.length ? ": " + partes.join(" y ") : "") + ".");
+    } else {
+      toast(plan.nuevos.length
+        ? (plan.nuevos.length === 1 ? "Se agregó 1 persona nueva" : "Se agregaron " + plan.nuevos.length + " personas nuevas") + " de " + nombre + ". No se dio de baja a nadie."
+        : "No había gente nueva en " + nombre + ". No se dio de baja a nadie.");
+    }
+    parsed = null;
+  }
+
+  function saveExcel() {
+    const plan = planImport();
+    const nombre = parsed.filename;
+    const hayBajas = plan.baja.length > 0;
+
+    let body = '<div class="note calm"><b>Qué va a pasar</b>' +
+      plural(plan.nuevos.length, "alta nueva", "altas nuevas") + ' · ' +
+      plural(plan.update.length, "colaborador se queda", "colaboradores se quedan") + ' · ' +
+      plural(plan.baja.length, "baja", "bajas") + '</div>';
+    if (hayBajas) {
+      body += nameList(plan.baja, u => u.citasFuturas ? plural(u.citasFuturas, "cita futura", "citas futuras") : "");
+      body += '<div class="note warn"><b>Estas personas perderían el acceso hoy</b>' +
+        'No vienen en el archivo. Si eso no es lo que quieres, usa el botón «' +
+        (plan.nuevos.length ? "Mejor solo agregar a los nuevos" : "Mejor no dar de baja a nadie") +
+        '» y nadie se va. Dar de baja tampoco cancela sus citas ya agendadas.</div>';
+    }
+    body += '<div class="note calm"><b>Se puede revertir</b>Las bajas quedan en «Dados de baja» y desde ahí las reactivas.</div>';
+
+    openConfirm({
+      title: hayBajas ? "¿Qué quieres hacer con «" + nombre + "»?" : "Agregar la gente de «" + nombre + "»",
+      lead: hayBajas
+        ? "El archivo trae menos gente de la que hay hoy en Veeda. Puedes hacer dos cosas: dejar la lista igualita al archivo, y entonces se da de baja a quien no venga; o solo agregar a los nuevos y no tocar a nadie más."
+        : "Después de esto, la lista de Veeda será exactamente lo que trae el archivo.",
+      body: body,
+      confirm: hayBajas ? "Dejar la lista igual al archivo" : "Agregar a la lista",
+      danger: hayBajas,
+      alt: hayBajas ? {
+        label: plan.nuevos.length ? "Mejor solo agregar a los nuevos" : "Mejor no dar de baja a nadie",
+        onClick: () => aplicarImport(plan, nombre, false)
+      } : null,
+      onConfirm: () => aplicarImport(plan, nombre, true)
+    });
+  }
+
+  $("#btn-add").onclick = () => { hubReturn = false; openModal("uno"); };
+  $("#btn-edit").onclick = openEditHub;
+
+  seedMovs();
+  render();
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body></html>
